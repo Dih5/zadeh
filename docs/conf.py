@@ -20,9 +20,7 @@
 import os
 import sys
 
-import zadeh
 sys.path.insert(0, os.path.abspath('..'))
-
 
 # -- General configuration ---------------------------------------------
 
@@ -33,11 +31,11 @@ needs_sphinx = '1.3'  # Napoleon extension
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
-'sphinx.ext.viewcode', 
-'sphinx.ext.napoleon',
-'nbsphinx',
-'IPython.sphinxext.ipython_console_highlighting',
-]
+              'sphinx.ext.viewcode',
+              'sphinx.ext.napoleon',
+              'nbsphinx',
+              'IPython.sphinxext.ipython_console_highlighting',
+              ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -56,9 +54,7 @@ project = 'zadeh'
 copyright = "2020, Dih5"
 author = "Dih5"
 
-# The version info for the project you're documenting, acts as replacement
-# for |version| and |release|, also used in various other places throughout
-# the built documents.
+# Version code
 version = release = '0.1.0'
 
 
@@ -80,7 +76,6 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output -------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -98,7 +93,6 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
 
 # -- Options for HTMLHelp output ---------------------------------------
 
@@ -135,7 +129,6 @@ latex_documents = [
      author, 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
@@ -145,7 +138,6 @@ man_pages = [
      'zadeh Package Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------
 
