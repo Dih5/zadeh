@@ -1,0 +1,18 @@
+language: python
+python:
+- 3.8
+- 3.7
+- 3.6
+- 3.5
+install: pip install -U tox-travis
+script: tox
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: __token__
+  password:
+    secure: X4dqgixjxke5bQ63BhzzxcqnkSMQiNPSDRRtEQ32wWydRFQiiEuCxQVyTcWPkF0DhvzL6QzT/B+b9kXYsinsZ9KzI36st41fJ72EsKnim3nsDGoKGxCKyvGzc6RP562WiWAGW9CGRcdX+sznNazzh4248QZzR1QW3VZUiKG2mlRhbnuFWIwBzgupC6Lqy+ODmO4439OvvrHp8dyB66hfl0JqE3Y5s4UylmdAHttU3lniqwBFkzAityFvHk9MwZpCWbNCUJv4NRVSrE7z1DotnwTOq5YLIv6nnPp70sUi9qqCVX6IZOJwOFV3MK4+lnzB9SqsxJLubYF47bg8fQgazGCbThF44NHealtO9JG6H/y+JK9OX+OjndjbAqmctdJV6W/W303kYKI7KfTdSDUFkPGs34H22XQt9uxGizcoGF0dj+ioUp4gQU9tY2rZJeUg558bAHMTr3ro8PzJSdZTnj9w+7ExkoxN0zFL/RwP6f+ydA53XKY6xDSA/y2R6xsWoF/MuRnB5IBWSkBHcJGfu4dV+we4hv2CjJR5ZgnecYVBh7TeaGPVZl+5oovmI9Zva4UjeKZ6ioE0DxEtxAOzzcOFDjnI7GP+EhOhoyVtrQj88Dm3HAWW0vpHfzG0NeabDqp6BTxJ7HFUGpN2M8qz5vCQcsqE2wD/DMjLyIRh2+U=
+  on:
+    tags: true
+    repo: Dih5/zadeh
+    python: 3.8
