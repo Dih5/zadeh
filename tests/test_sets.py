@@ -27,6 +27,25 @@ def test_numbers():
     assert n(40) == 0.5
 
 
+def test_limit_cases():
+    """Test limit cases on piecewise linear functions"""
+    n = TriangularFuzzySet(0, 0, 1)
+    assert n(-1) == 0
+    assert isclose(n(1E-8), 1)
+    assert abs(n(1)) < 1E-6
+
+    n = TriangularFuzzySet(1, 1, 2)
+    assert n(-1) == 0
+    assert abs(n(1.000001) - 1) < 1E-6
+    assert abs(n(2)) < 1E-6
+
+    n = TrapezoidalFuzzySet(0, 0, 1, 1)
+    assert n(-1) == 0
+    assert abs(n(0.000001) - 1) < 1E-6
+    assert isclose(n(0.5), 1)
+    assert n(2) == 0
+
+
 def test_operation():
     """Test fuzzy set operations"""
     n = FuzzySet(lambda x: 0.5 if x == 1 else 0.1)
@@ -41,9 +60,8 @@ def test_operation():
     assert isclose(n3(1), 0.8)
     assert isclose(n3(2), 0.2)
 
-
     # OR / union
-    n=FuzzySet(lambda x: 0.5 if x == 1 else 0.1) | FuzzySet(lambda x: 0.7 if x == 2 else 0.05)
+    n = FuzzySet(lambda x: 0.5 if x == 1 else 0.1) | FuzzySet(lambda x: 0.7 if x == 2 else 0.05)
     assert isclose(n(1), 0.5)
     assert isclose(n(2), 0.7)
     assert isclose(n(3), 0.1)

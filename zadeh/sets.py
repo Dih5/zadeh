@@ -1,5 +1,16 @@
 from math import exp
 
+import numpy as np
+
+
+def _ensure_spaced(m, eps=1E-8):
+    """Ensure a list of numbers is ordered and with no repetitions, slightly shifting them if needed"""
+    m = np.asarray(m)
+    d = np.diff(m)
+    if np.any(d < 0):
+        raise ValueError("List of numbers is not ordered")
+    return np.cumsum(np.concatenate(([m[0]], np.where(d > 0, d, eps))))
+
 
 class FuzzySet:
     """A fuzzy set"""
@@ -94,6 +105,7 @@ class TriangularFuzzySet(FuzzySet):
     """A fuzzy set defined by a triangular function"""
 
     def __init__(self, a, b, c):
+        a, b, c = _ensure_spaced([a, b, c])
         self.a = a
         self.b = b
         self.c = c
@@ -114,6 +126,7 @@ class TrapezoidalFuzzySet(FuzzySet):
     """A fuzzy set defined by a trapezoidal function"""
 
     def __init__(self, a, b, c, d):
+        a, b, c, d = _ensure_spaced([a, b, c, d])
         self.a = a
         self.b = b
         self.c = c
