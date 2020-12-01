@@ -18,6 +18,14 @@ class FuzzySet:
         assert self.mu is not None, "A membership function has to be defined"
         return self.mu(x)
 
+    def __mul__(self, other):
+        if isinstance(other, (float, int)):
+            return FuzzySet(lambda x: other * self(x))
+        raise NotImplementedError("Multiplication is only defined with crisp numbers")
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     # TODO: More generalized fuzzy set operations could be defined
 
     def __neg__(self):

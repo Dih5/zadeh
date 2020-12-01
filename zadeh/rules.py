@@ -135,7 +135,8 @@ class FuzzyOr(FuzzyProposition):
 
     @staticmethod
     def from_description(description, variables_dict):
-        return FuzzyOr([FuzzyProposition.from_description(variable, variables_dict) for variable in description["children"]])
+        return FuzzyOr(
+            [FuzzyProposition.from_description(variable, variables_dict) for variable in description["children"]])
 
     def __call__(self, values):
         return max(p(values) for p in self.proposition_list)
@@ -149,37 +150,41 @@ _fuzzy_propositions = {"or": FuzzyOr, "and": FuzzyAnd, "not": FuzzyNot, "is": Fu
 
 
 class FuzzyRule:
-    """A fuzzy rule of the form 'if <antecedent> then <consequent>'"""
+    """A fuzzy rule of the form 'if <antecedent> then <consequent>', possibly with a weight in (0, 1]"""
 
-    def __init__(self, antecedent, consequent):
+    def __init__(self, antecedent, consequent, weight=1.0):
+        assert 0 < weight <= 1.0, "weight must be in (0, 1]"
         super().__init__()
         self.antecedent = antecedent
         self.consequent = consequent
+        self.weight = weight
 
         if not isinstance(consequent, FuzzyValuation):
             # TODO: Support this
             raise ValueError("Complex consequent rules not supported")
 
     def get_description(self):
-        return {"antecedent": self.antecedent.get_description(), "consequent": self.consequent.get_description()}
+        return {"antecedent": self.antecedent.get_description(), "consequent": self.consequent.get_description(),
+                "weight": self.weight}
 
     @staticmethod
     def from_description(description, variables_dict):
         return FuzzyRule(FuzzyProposition.from_description(description["antecedent"], variables_dict),
-                         FuzzyProposition.from_description(description["consequent"], variables_dict))
+                         FuzzyProposition.from_description(description["consequent"], variables_dict),
+                         weight=description["weight"])
 
     def __call__(self, values):
         """Evaluate the rule, returning a fuzzy number"""
         # TODO: Add more methods
         # Mamdani inference
         cutoff = self.antecedent(values)
-        return FuzzySet(lambda x: min(cutoff, self.consequent.variable[self.consequent.value](x)))
+        return FuzzySet(lambda x: min(cutoff, self.consequent.variable[self.consequent.value](x)))*self.weight
 
     def __repr__(self):
         return "FuzzyRule<%s>" % str(self)
 
     def __str__(self):
-        return "if (%s) then (%s)" % (self.antecedent, self.consequent)
+        return "if (%s) then (%s) [%f]" % (self.antecedent, self.consequent, self.weight)
 
 
 class FuzzyRuleSet:
@@ -189,15 +194,12 @@ class FuzzyRuleSet:
         super().__init__()
         self.rule_list = rule_list
 
-
     def get_description(self):
         return {"rule_list": [r.get_description() for r in self.rule_list]}
 
     @staticmethod
     def from_description(description, variables_dict):
         return FuzzyRuleSet([FuzzyRule.from_description(d, variables_dict) for d in description["rule_list"]])
-
-
 
     def __call__(self, values):
         """Evaluate the set of rules, returning a fuzzy number"""
