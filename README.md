@@ -1,4 +1,11 @@
 # zadeh
+[![Github release](https://img.shields.io/github/release/dih5/zadeh.svg)](https://github.com/dih5/zadeh/releases/latest)
+[![PyPI](https://img.shields.io/pypi/v/zadeh.svg)](https://pypi.python.org/pypi/zadeh)
+
+[![license MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Dih5/zadeh/master/LICENSE.txt)
+
+[![Build Status](https://travis-ci.org/Dih5/zadeh.svg?branch=master)](https://travis-ci.org/Dih5/zadeh)
+[![Documentation Status](https://readthedocs.org/projects/zadeh/badge/?version=latest)](http://zadeh.readthedocs.io/en/latest/?badge=latest)
 
 Python package to build fuzzy inference systems
 
