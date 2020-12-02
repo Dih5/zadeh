@@ -59,7 +59,57 @@ class FIS:
 
         ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in self.variables})
 
+    def get_1d_interactive(self, variable):
+        if ipywidgets is None or plt is None:
+            raise ModuleNotFoundError("ipywidgets and matplotlib are required")
+
+        free_variables = [v for v in self.variables if v != variable]
+        xx = variable.domain.get_mesh()
+
+        def plot(**kwargs):
+            output = [self.get_crisp_output({variable.name: x, **kwargs}) for x in xx]
+            plt.plot(xx, output)
+            plt.show()
+
+        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
+
+    def get_2d_interactive(self, variable1, variable2):
+        if ipywidgets is None or plt is None:
+            raise ModuleNotFoundError("ipywidgets and matplotlib are required")
+
+        x_name = variable1.name
+        y_name = variable2.name
+
+        free_variables = [v for v in self.variables if (v != variable1 and v != variable2)]
+        xx = variable1.domain.get_mesh()
+        yy = variable2.domain.get_mesh()
+
+        def plot(**kwargs):
+            zz = np.asarray(
+                [
+                    [
+                        self.get_crisp_output({x_name: x, y_name: y, **kwargs})
+                        for x in xx
+                    ]
+                    for y in yy
+                ]
+            )
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection="3d")
+
+            ax.plot_surface(*np.meshgrid(xx, yy), zz, cmap=cm.viridis)
+
+            ax.set_xlabel(x_name)
+            ax.set_ylabel(y_name)
+            ax.set_zlabel(self.target.name)
+
+            ax.invert_xaxis()  # Seems more natural to me
+            plt.show()
+
+        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
+
     def plot_surface(self):
+        # TODO: Merge this method
         if len(self.variables) < 2:
             raise ValueError("At least two variables are required")
         if len(self.variables) > 2:
