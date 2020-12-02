@@ -41,12 +41,33 @@ class FIS:
                    target_variable)
 
     def get_output(self, values):
+        """
+        Get the output of the system as a fuzzy set
+
+        Args:
+            values (dict of str): A mapping from variables to their fuzzy values.
+
+        Returns:
+            FuzzySet: The fuzzy set
+
+        """
         return self.rules(values)
 
     def get_crisp_output(self, values):
+        """
+        Get the output of the system as a crisp value
+
+        Args:
+            values (dict of str): A mapping from variables to their fuzzy values.
+
+        Returns:
+            Centroid of the output of the system
+
+        """
         return self.target.domain.centroid(self.get_output(values))
 
     def get_interactive(self):
+        """Display an interactive plot with the fuzzy output of the FIS"""
         if ipywidgets is None or plt is None:
             raise ModuleNotFoundError("ipywidgets and matplotlib are required")
 
@@ -59,81 +80,86 @@ class FIS:
 
         ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in self.variables})
 
+    def plot_1d(self, variable, fixed_variables, axes=None):
+        """
+        Produce a plot with the output as a function of a variable when the rest are fixed.
+
+        Args:
+            variable (FuzzyVariable): The independent variable.
+            fixed_variables (dict of str): A mapping with fuzzy values of the rest of the variables.
+            axes (plt.Axes): An existing axes instance to plot. If None, a new figure is created.
+
+        Returns:
+            plt.Axes: Axes for further tweaking
+
+        """
+        if plt is None:
+            raise ModuleNotFoundError("matplotlib is required")
+
+        xx = variable.domain.get_mesh()
+        output = [self.get_crisp_output({variable.name: x, **fixed_variables}) for x in xx]
+
+        ax = axes or plt.figure().add_subplot(1, 1, 1)
+        ax.plot(xx, output)
+        ax.set_xlabel(variable.name)
+        ax.set_ylabel(self.target.name)
+        return ax
+
     def get_1d_interactive(self, variable):
+        """
+        Produce an interactive plot with the output as a function of a variable when the rest are fixed.
+
+        Args:
+            variable (FuzzyVariable): The independent variable.
+
+        """
         if ipywidgets is None or plt is None:
             raise ModuleNotFoundError("ipywidgets and matplotlib are required")
 
         free_variables = [v for v in self.variables if v != variable]
-        xx = variable.domain.get_mesh()
 
         def plot(**kwargs):
-            output = [self.get_crisp_output({variable.name: x, **kwargs}) for x in xx]
-            plt.plot(xx, output)
+            self.plot_1d(variable, kwargs)
             plt.show()
 
         ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
 
-    def get_2d_interactive(self, variable1, variable2):
-        if ipywidgets is None or plt is None:
-            raise ModuleNotFoundError("ipywidgets and matplotlib are required")
+    def plot_2d(self, variable1, variable2, fixed_variables, axes=None):
+        """
+        Produce a plot with the output as a function of two variables when the rest are fixed.
+
+        Args:
+            variable1 (FuzzyVariable): The first independent variable.
+            variable2 (FuzzyVariable): The second independent variable.
+            fixed_variables (dict of str): A mapping with fuzzy values of the rest of the variables.
+            axes (plt.Axes): An existing axes instance to plot. An 3D projection must have been set on it. If None,
+                             a new figure is created.
+
+        Returns:
+            plt.Axes: Axes for further tweaking
+
+        """
+        if plt is None:
+            raise ModuleNotFoundError("matplotlib is required")
 
         x_name = variable1.name
         y_name = variable2.name
 
-        free_variables = [v for v in self.variables if (v != variable1 and v != variable2)]
+        # TODO: Allow coarser mesh
         xx = variable1.domain.get_mesh()
         yy = variable2.domain.get_mesh()
 
-        def plot(**kwargs):
-            zz = np.asarray(
-                [
-                    [
-                        self.get_crisp_output({x_name: x, y_name: y, **kwargs})
-                        for x in xx
-                    ]
-                    for y in yy
-                ]
-            )
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection="3d")
-
-            ax.plot_surface(*np.meshgrid(xx, yy), zz, cmap=cm.viridis)
-
-            ax.set_xlabel(x_name)
-            ax.set_ylabel(y_name)
-            ax.set_zlabel(self.target.name)
-
-            ax.invert_xaxis()  # Seems more natural to me
-            plt.show()
-
-        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
-
-    def plot_surface(self):
-        # TODO: Merge this method
-        if len(self.variables) < 2:
-            raise ValueError("At least two variables are required")
-        if len(self.variables) > 2:
-            # TODO: Allow selection of additional variables as fixed values
-            raise NotImplementedError
-
-        x_name = self.variables[0].name
-        y_name = self.variables[1].name
-        # TODO: Allow coarser mesh
-        xx = self.variables[0].domain.get_mesh()
-        yy = self.variables[1].domain.get_mesh()
         zz = np.asarray(
             [
                 [
-                    self.get_crisp_output({x_name: x, y_name: y})
+                    self.get_crisp_output({x_name: x, y_name: y, **fixed_variables})
                     for x in xx
                 ]
                 for y in yy
             ]
         )
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d")
-
+        ax = axes or plt.figure().add_subplot(1, 1, 1, projection="3d")
         ax.plot_surface(*np.meshgrid(xx, yy), zz, cmap=cm.viridis)
 
         ax.set_xlabel(x_name)
@@ -143,3 +169,23 @@ class FIS:
         ax.invert_xaxis()  # Seems more natural to me
 
         return ax
+
+    def get_2d_interactive(self, variable1, variable2):
+        """
+        Produce an interactive plot with the output as a function of two variables when the rest are fixed.
+
+        Args:
+            variable1 (FuzzyVariable): The first independent variable.
+            variable2 (FuzzyVariable): The second independent variable.
+
+        """
+        if ipywidgets is None or plt is None:
+            raise ModuleNotFoundError("ipywidgets and matplotlib are required")
+
+        free_variables = [v for v in self.variables if (v != variable1 and v != variable2)]
+
+        def plot(**kwargs):
+            self.plot_2d(variable1, variable2, kwargs)
+            plt.show()
+
+        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
