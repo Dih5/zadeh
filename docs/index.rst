@@ -5,6 +5,7 @@ zadeh
    :maxdepth: 2
    :caption: Contents:
 
+   demo.ipynb
    modules.rst
 
 Indices and tables
