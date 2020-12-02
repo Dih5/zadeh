@@ -87,4 +87,37 @@ class FloatDomain(Domain):
         return ipywidgets.FloatSlider(min=self.min, max=self.max)
 
 
-_domain_subclasses = {"FloatDomain": FloatDomain}
+class CategoricalDomain(Domain):
+    def __init__(self, name, values):
+        """
+
+        Args:
+            name (str): Name of the domain.
+            values (list): List of possible valued.
+        """
+        super().__init__(name)
+        self.values = values
+
+    def get_description(self):
+        return {"type": "CategoricalDomain", "name": self.name, "values": self.values}
+
+    @staticmethod
+    def from_description(description):
+        return CategoricalDomain(description["name"], description["values"])
+
+    def get_mesh(self):
+        return np.asarray(self.values)
+
+    def centroid(self, set):
+        # Return as the mode
+        # In case of ties, only the first value is returned
+        xx, mu = self.evaluate_set(set)
+        return xx[np.argmax(mu)]
+
+    def get_ipywidget(self):
+        if ipywidgets is None:
+            raise ModuleNotFoundError("ipywidgets is required")
+        return ipywidgets.Dropdown(options=self.values)
+
+
+_domain_subclasses = {"FloatDomain": FloatDomain, "CategoricalDomain": CategoricalDomain}
