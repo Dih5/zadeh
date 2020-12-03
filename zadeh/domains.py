@@ -42,7 +42,7 @@ class Domain:
         """Calculate the centroid of a fuzzy set"""
         raise NotImplementedError("A Domain subclass must be used instead.")
 
-    def get_ipywidget(self):
+    def get_ipywidget(self, **kwargs):
         """Get a widget representing the domain"""
         raise NotImplementedError("A Domain subclass must be used instead.")
 
@@ -81,10 +81,11 @@ class FloatDomain(Domain):
         xx, mu = self.evaluate_set(set)
         return np.average(xx, weights=mu)
 
-    def get_ipywidget(self):
+    def get_ipywidget(self, **kwargs):
         if ipywidgets is None:
             raise ModuleNotFoundError("ipywidgets is required")
-        return ipywidgets.FloatSlider(min=self.min, max=self.max)
+        kwargs = {k: v for k, v in kwargs.items() if k in ["continuous_update"]}
+        return ipywidgets.FloatSlider(min=self.min, max=self.max, **kwargs)
 
 
 class CategoricalDomain(Domain):
@@ -114,10 +115,12 @@ class CategoricalDomain(Domain):
         xx, mu = self.evaluate_set(set)
         return xx[np.argmax(mu)]
 
-    def get_ipywidget(self):
+    def get_ipywidget(self, **kwargs):
         if ipywidgets is None:
             raise ModuleNotFoundError("ipywidgets is required")
-        return ipywidgets.Dropdown(options=self.values)
+
+        kwargs = {k: v for k, v in kwargs.items() if k in ["continuous_update"]}
+        return ipywidgets.Dropdown(options=self.values, **kwargs)
 
 
 _domain_subclasses = {"FloatDomain": FloatDomain, "CategoricalDomain": CategoricalDomain}

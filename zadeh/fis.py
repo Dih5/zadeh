@@ -66,8 +66,14 @@ class FIS:
         """
         return self.target.domain.centroid(self.get_output(values))
 
-    def get_interactive(self):
-        """Display an interactive plot with the fuzzy output of the FIS"""
+    def get_interactive(self, continuous_update=False):
+        """
+        Display an interactive plot with the fuzzy output of the FIS
+
+        Args:
+            continuous_update (bool): Whether to continuously update with the widgets value.
+
+        """
         if ipywidgets is None or plt is None:
             raise ModuleNotFoundError("ipywidgets and matplotlib are required")
 
@@ -78,7 +84,9 @@ class FIS:
             plt.legend(["Fuzzy output", "Centroid"])
             plt.show()
 
-        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in self.variables})
+        ipywidgets.interact(plot,
+                            **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
+                               variable in self.variables})
 
     def plot_1d(self, variable, fixed_variables, axes=None):
         """
@@ -105,12 +113,13 @@ class FIS:
         ax.set_ylabel(self.target.name)
         return ax
 
-    def get_1d_interactive(self, variable):
+    def get_1d_interactive(self, variable, continuous_update=False):
         """
         Produce an interactive plot with the output as a function of a variable when the rest are fixed.
 
         Args:
             variable (FuzzyVariable): The independent variable.
+            continuous_update (bool): Whether to continuously update with the widgets value.
 
         """
         if ipywidgets is None or plt is None:
@@ -122,7 +131,9 @@ class FIS:
             self.plot_1d(variable, kwargs)
             plt.show()
 
-        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
+        ipywidgets.interact(plot,
+                            **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
+                               variable in free_variables})
 
     def plot_2d(self, variable1, variable2, fixed_variables, axes=None):
         """
@@ -176,13 +187,14 @@ class FIS:
 
         return ax
 
-    def get_2d_interactive(self, variable1, variable2):
+    def get_2d_interactive(self, variable1, variable2, continuous_update=False):
         """
         Produce an interactive plot with the output as a function of two variables when the rest are fixed.
 
         Args:
             variable1 (FuzzyVariable): The first independent variable.
             variable2 (FuzzyVariable): The second independent variable.
+            continuous_update (bool): Whether to continuously update with the widgets value.
 
         """
         if ipywidgets is None or plt is None:
@@ -194,4 +206,6 @@ class FIS:
             self.plot_2d(variable1, variable2, kwargs)
             plt.show()
 
-        ipywidgets.interact(plot, **{variable.name: variable.domain.get_ipywidget() for variable in free_variables})
+        ipywidgets.interact(plot,
+                            **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
+                               variable in free_variables})
