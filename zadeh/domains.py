@@ -82,7 +82,10 @@ class FloatDomain(Domain):
 
     def centroid(self, set):
         xx, mu = self.evaluate_set(set)
-        return np.average(xx, weights=mu)
+        try:
+            return np.average(xx, weights=mu)
+        except ZeroDivisionError:
+            return np.nan
 
     def get_ipywidget(self, **kwargs):
         if ipywidgets is None:
