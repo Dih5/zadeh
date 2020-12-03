@@ -88,7 +88,7 @@ class FIS:
                             **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
                                variable in self.variables})
 
-    def plot_1d(self, variable, fixed_variables, axes=None):
+    def plot_1d(self, variable, fixed_variables=None, axes=None):
         """
         Produce a plot with the output as a function of a variable when the rest are fixed.
 
@@ -103,6 +103,9 @@ class FIS:
         """
         if plt is None:
             raise ModuleNotFoundError("matplotlib is required")
+
+        if fixed_variables is None:
+            fixed_variables = {}
 
         xx = variable.domain.get_mesh()
         output = [self.get_crisp_output({variable.name: x, **fixed_variables}) for x in xx]
@@ -135,7 +138,7 @@ class FIS:
                             **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
                                variable in free_variables})
 
-    def plot_2d(self, variable1, variable2, fixed_variables, axes=None):
+    def plot_2d(self, variable1, variable2, fixed_variables=None, axes=None):
         """
         Produce a plot with the output as a function of two variables when the rest are fixed.
 
@@ -152,6 +155,9 @@ class FIS:
         """
         if plt is None:
             raise ModuleNotFoundError("matplotlib is required")
+
+        if fixed_variables is None:
+            fixed_variables = {}
 
         x_name = variable1.name
         y_name = variable2.name
