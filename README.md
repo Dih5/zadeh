@@ -11,27 +11,35 @@ Python package to build fuzzy inference systems
 
 
 ## Installation
-Assuming you have a [Python3](https://www.python.org/) distribution with [pip](https://pip.pypa.io/en/stable/installing/), to install a development version, cd to the directory with this file and:
-
+Assuming you have a [Python3](https://www.python.org/) distribution with [pip](https://pip.pypa.io/en/stable/installing/), the latest pypi release can be installed with:
 ```
-pip3 install -e .
+pip3 install zadeh
 ```
-As an alternative, a virtualenv might be used to install the package:
+To install the recommended optional dependencies you can run
 ```
-# Prepare a clean virtualenv and activate it
-virtualenv -p /usr/bin/python3.6 venv
-source venv/bin/activate
-# Install the package
-pip3 install -e .
-```
-
-To install also the dependencies to run the tests or to generate the documentation install some of the extras like
-```
-pip3 install -e '.[docs,test]'
+pip3 install 'zadeh[extras]'
 ```
 Mind the quotes.
 
-## Documentation
+## Developer information
+### Development installation
+
+To install a development version, clone the repo, cd to the directory with this file and:
+
+```
+pip3 install -e '.[test]'
+```
+Consider using a virtualenv if needed:
+```
+# Prepare a clean virtualenv and activate it
+virtualenv venv
+source venv/bin/activate
+# Install the package
+pip3 install -e '.[test]'
+```
+
+### Documentation
+
 To generate the documentation, the *docs* extra dependencies must be installed.
 
 To generate an html documentation with sphinx run:
@@ -46,7 +54,7 @@ make pdf
 
 
 
-## Test
+### Test
 To run the unitary tests:
 ```
 make test
