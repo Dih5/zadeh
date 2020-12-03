@@ -17,9 +17,12 @@ class Domain:
     def __init__(self, name):
         self.name = name
 
+    def _get_description(self):
+        raise NotImplementedError
+
     @staticmethod
-    def from_description(description):
-        return _domain_subclasses[description["type"]].from_description(description)
+    def _from_description(description):
+        return _domain_subclasses[description["type"]]._from_description(description)
 
     def get_mesh(self):
         """Get a mesh representing the domain"""
@@ -62,11 +65,11 @@ class FloatDomain(Domain):
         self.max = max
         self.steps = steps
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "FloatDomain", "name": self.name, "min": self.min, "max": self.max, "steps": self.steps}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return FloatDomain(description["name"], description["min"], description["max"], description["steps"])
 
     def get_mesh(self):
@@ -99,11 +102,11 @@ class CategoricalDomain(Domain):
         super().__init__(name)
         self.values = values
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "CategoricalDomain", "name": self.name, "values": self.values}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return CategoricalDomain(description["name"], description["values"])
 
     def get_mesh(self):

@@ -11,9 +11,12 @@ class FuzzyProposition:
         """Evaluate the statement, returning a number in [0, 1]"""
         raise NotImplementedError
 
+    def _get_description(self):
+        raise NotImplementedError
+
     @staticmethod
-    def from_description(description, variables_dict):
-        return _fuzzy_propositions[description["type"]].from_description(description, variables_dict)
+    def _from_description(description, variables_dict):
+        return _fuzzy_propositions[description["type"]]._from_description(description, variables_dict)
 
     def __repr__(self):
         return "FuzzyProposition<%s>" % str(self)
@@ -41,11 +44,11 @@ class FuzzyValuation(FuzzyProposition):
         self.variable = variable
         self.value = value
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "is", "variable": self.variable.name, "value": self.value}
 
     @staticmethod
-    def from_description(description, variables_dict):
+    def _from_description(description, variables_dict):
         return FuzzyValuation(variables_dict[description["variable"]], description["value"])
 
     def __call__(self, values):
@@ -67,11 +70,11 @@ class FuzzyNotValuation(FuzzyProposition):
         self.variable = variable
         self.value = value
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "is not", "variable": self.variable.name, "value": self.value}
 
     @staticmethod
-    def from_description(description, variables_dict):
+    def _from_description(description, variables_dict):
         return FuzzyNotValuation(variables_dict[description["variable"]], description["value"])
 
     def __call__(self, values):
@@ -88,11 +91,11 @@ class FuzzyNot(FuzzyProposition):
         super().__init__()
         self.proposition = proposition
 
-    def get_description(self):
-        return {"type": "not", "children": [self.proposition.get_description()]}
+    def _get_description(self):
+        return {"type": "not", "children": [self.proposition._get_description()]}
 
     @staticmethod
-    def from_description(description, variables_dict):
+    def _from_description(description, variables_dict):
         return FuzzyNot(variables_dict[description["children"][0]])
 
     def __call__(self, values):
@@ -109,11 +112,11 @@ class FuzzyAnd(FuzzyProposition):
         super().__init__()
         self.proposition_list = proposition_list
 
-    def get_description(self):
-        return {"type": "and", "children": [p.get_description() for p in self.proposition_list]}
+    def _get_description(self):
+        return {"type": "and", "children": [p._get_description() for p in self.proposition_list]}
 
     @staticmethod
-    def from_description(description, variables_dict):
+    def _from_description(description, variables_dict):
         return FuzzyAnd([variables_dict[variable] for variable in description["children"]])
 
     def __call__(self, values):
@@ -130,13 +133,13 @@ class FuzzyOr(FuzzyProposition):
         super().__init__()
         self.proposition_list = proposition_list
 
-    def get_description(self):
-        return {"type": "or", "children": [p.get_description() for p in self.proposition_list]}
+    def _get_description(self):
+        return {"type": "or", "children": [p._get_description() for p in self.proposition_list]}
 
     @staticmethod
-    def from_description(description, variables_dict):
+    def _from_description(description, variables_dict):
         return FuzzyOr(
-            [FuzzyProposition.from_description(variable, variables_dict) for variable in description["children"]])
+            [FuzzyProposition._from_description(variable, variables_dict) for variable in description["children"]])
 
     def __call__(self, values):
         return max(p(values) for p in self.proposition_list)
@@ -163,14 +166,14 @@ class FuzzyRule:
             # TODO: Support this
             raise ValueError("Complex consequent rules not supported")
 
-    def get_description(self):
-        return {"antecedent": self.antecedent.get_description(), "consequent": self.consequent.get_description(),
+    def _get_description(self):
+        return {"antecedent": self.antecedent._get_description(), "consequent": self.consequent._get_description(),
                 "weight": self.weight}
 
     @staticmethod
-    def from_description(description, variables_dict):
-        return FuzzyRule(FuzzyProposition.from_description(description["antecedent"], variables_dict),
-                         FuzzyProposition.from_description(description["consequent"], variables_dict),
+    def _from_description(description, variables_dict):
+        return FuzzyRule(FuzzyProposition._from_description(description["antecedent"], variables_dict),
+                         FuzzyProposition._from_description(description["consequent"], variables_dict),
                          weight=description["weight"])
 
     def __call__(self, values):
@@ -194,12 +197,12 @@ class FuzzyRuleSet:
         super().__init__()
         self.rule_list = rule_list
 
-    def get_description(self):
-        return {"rule_list": [r.get_description() for r in self.rule_list]}
+    def _get_description(self):
+        return {"rule_list": [r._get_description() for r in self.rule_list]}
 
     @staticmethod
-    def from_description(description, variables_dict):
-        return FuzzyRuleSet([FuzzyRule.from_description(d, variables_dict) for d in description["rule_list"]])
+    def _from_description(description, variables_dict):
+        return FuzzyRuleSet([FuzzyRule._from_description(d, variables_dict) for d in description["rule_list"]])
 
     def __call__(self, values):
         """Evaluate the set of rules, returning a fuzzy number"""

@@ -26,18 +26,18 @@ class FIS:
         # TODO: Support multitarget
         self.target = target
 
-    def get_description(self):
-        return {"variables": [v.get_description() for v in self.variables],
-                "rules": self.rules.get_description(),
-                "target": self.target.get_description()}
+    def _get_description(self):
+        return {"variables": [v._get_description() for v in self.variables],
+                "rules": self.rules._get_description(),
+                "target": self.target._get_description()}
 
     @staticmethod
-    def from_description(description):
-        variables = [FuzzyVariable.from_description(d) for d in description["variables"]]
-        target_variable = FuzzyVariable.from_description(description["target"])
+    def _from_description(description):
+        variables = [FuzzyVariable._from_description(d) for d in description["variables"]]
+        target_variable = FuzzyVariable._from_description(description["target"])
         variables_dict = {**{v.name: v for v in variables}, target_variable.name: target_variable}
         return FIS(variables,
-                   FuzzyRuleSet.from_description(description["rules"], variables_dict),
+                   FuzzyRuleSet._from_description(description["rules"], variables_dict),
                    target_variable)
 
     def get_output(self, values):

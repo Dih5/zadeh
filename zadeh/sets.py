@@ -18,12 +18,12 @@ class FuzzySet:
     def __init__(self, mu=None):
         self.mu = mu
 
-    def get_description(self):
+    def _get_description(self):
         raise NotImplementedError("Descriptions are only available for primitive types")
 
     @staticmethod
-    def from_description(description):
-        return _set_types[description["type"]].from_description(description)
+    def _from_description(description):
+        return _set_types[description["type"]]._from_description(description)
 
     def __call__(self, x):
         assert self.mu is not None, "A membership function has to be defined"
@@ -69,11 +69,11 @@ class SingletonSet(FuzzySet):
         super().__init__(lambda y: 1 if x == y else 0)
         self.x = x
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "singleton", "x": self.x}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return SingletonSet(description["x"])
 
 
@@ -93,11 +93,11 @@ class DiscreteFuzzySet(FuzzySet):
     def __call__(self, x):
         return self.d.get(x, 0)
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "discrete", "d": self.d}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return DiscreteFuzzySet(description["d"])
 
 
@@ -111,11 +111,11 @@ class TriangularFuzzySet(FuzzySet):
         self.c = c
         super().__init__()
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "triangular", "a": self.a, "b": self.b, "c": self.c}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return TriangularFuzzySet(description["a"], description["b"], description["c"])
 
     def __call__(self, x):
@@ -133,11 +133,11 @@ class TrapezoidalFuzzySet(FuzzySet):
         self.d = d
         super().__init__()
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "trapezoidal", "a": self.a, "b": self.b, "c": self.c, "d": self.d}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return TrapezoidalFuzzySet(description["a"], description["b"], description["c"], description["d"])
 
     def __call__(self, x):
@@ -152,11 +152,11 @@ class GaussianFuzzySet(FuzzySet):
         self.c = c
         super().__init__()
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "gaussian", "a": self.a, "c": self.c}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return GaussianFuzzySet(description["a"], description["c"])
 
     def __call__(self, x):
@@ -175,11 +175,11 @@ class BellFuzzySet(FuzzySet):
         self.c = c
         super().__init__()
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "bell", "a": self.a, "b": self.b, "c": self.c}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return BellFuzzySet(description["a"], description["b"], description["c"])
 
     def __call__(self, x):
@@ -194,11 +194,11 @@ class SigmoidalFuzzySet(FuzzySet):
         self.c = c
         super().__init__()
 
-    def get_description(self):
+    def _get_description(self):
         return {"type": "sigmoidal", "a": self.a, "c": self.c}
 
     @staticmethod
-    def from_description(description):
+    def _from_description(description):
         return SigmoidalFuzzySet(description["a"], description["c"])
 
     def __call__(self, x):

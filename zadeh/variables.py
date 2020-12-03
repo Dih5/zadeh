@@ -22,15 +22,15 @@ class FuzzyVariable:
         self.values = values
         self.name = name if name is not None else self.domain.name
 
-    def get_description(self):
+    def _get_description(self):
         return {"name": self.name,
-                "values": {key: val.get_description() for key, val in self.values.items()},
-                "domain": self.domain.get_description()}
+                "values": {key: val._get_description() for key, val in self.values.items()},
+                "domain": self.domain._get_description()}
 
     @staticmethod
-    def from_description(description):
-        domain = Domain.from_description(description["domain"])
-        values = {key: FuzzySet.from_description(val) for key, val in description["values"].items()}
+    def _from_description(description):
+        domain = Domain._from_description(description["domain"])
+        values = {key: FuzzySet._from_description(val) for key, val in description["values"].items()}
         return FuzzyVariable(domain, values, name=description["name"])
 
     def plot(self):
