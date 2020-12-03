@@ -159,6 +159,12 @@ class FIS:
             ]
         )
 
+        # String coordinates must be converted for this kind of plot:
+        if xx.dtype.kind == 'U':
+            xx = np.arange(len(xx))
+        if yy.dtype.kind == 'U':
+            yy = np.arange(len(yy))
+
         ax = axes or plt.figure().add_subplot(1, 1, 1, projection="3d")
         ax.plot_surface(*np.meshgrid(xx, yy), zz, cmap=cm.viridis)
 
