@@ -55,6 +55,9 @@ class FIS:
                    FuzzyRuleSet._from_description(description["rules"], variables_dict),
                    target_variable)
 
+    def _to_c(self):
+        return self.rules._to_c()
+
     def get_output(self, values):
         """
         Get the output of the system as a fuzzy set
@@ -80,6 +83,10 @@ class FIS:
 
         """
         return self.target.domain.centroid(self.get_output(values))
+
+    def dict_to_ordered(self, values):
+        """Transform a dict of inputs into an array in the FIS order"""
+        return [values[key.name] for key in self.variables]
 
     def get_interactive(self, continuous_update=False):
         """

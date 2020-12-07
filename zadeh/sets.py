@@ -29,6 +29,10 @@ class FuzzySet:
         assert self.mu is not None, "A membership function has to be defined"
         return self.mu(x)
 
+    def _to_c(self, name):
+        raise NotImplementedError("C code generation not available. Overwrite the _to_c method if you know what "
+                                  "you are doing.")
+
     def __mul__(self, other):
         if isinstance(other, (float, int)):
             return FuzzySet(lambda x: other * self(x))
@@ -76,6 +80,9 @@ class SingletonSet(FuzzySet):
     def _from_description(description):
         return SingletonSet(description["x"])
 
+    def _to_c(self, name):
+        return "({x}=={a})?1.0:0.0".format(x=name, a=self.x)
+
 
 class DiscreteFuzzySet(FuzzySet):
     """A discrete fuzzy set (non-null in a discrete set of points)"""
@@ -92,6 +99,9 @@ class DiscreteFuzzySet(FuzzySet):
 
     def __call__(self, x):
         return self.d.get(x, 0)
+
+    def _to_c(self, name):
+        raise NotImplementedError("C code not available for DiscreteFuzzySet")
 
     def _get_description(self):
         return {"type": "discrete", "d": self.d}
@@ -121,6 +131,12 @@ class TriangularFuzzySet(FuzzySet):
     def __call__(self, x):
         return max(min((x - self.a) / (self.b - self.a), (self.c - x) / (self.c - self.b)), 0)
 
+    def _to_c(self, name):
+        return "max(2, min(2, ({x} - {a}) / ({b} - {a}), ({c} - {x}) / ({c} - {b})), 0.0)".format(x=name,
+                                                                                                  a=self.a,
+                                                                                                  b=self.b,
+                                                                                                  c=self.c)
+
 
 class TrapezoidalFuzzySet(FuzzySet):
     """A fuzzy set defined by a trapezoidal function"""
@@ -143,6 +159,13 @@ class TrapezoidalFuzzySet(FuzzySet):
     def __call__(self, x):
         return max(min((x - self.a) / (self.b - self.a), 1, (self.d - x) / (self.d - self.c)), 0)
 
+    def _to_c(self, name):
+        return "max(2, min(3, ({x} - {a}) / ({b} - {a}), 1.0, ({d} - {x}) / ({d} - {c})), 0.0)".format(x=name,
+                                                                                                       a=self.a,
+                                                                                                       b=self.b,
+                                                                                                       c=self.c,
+                                                                                                       d=self.d)
+
 
 class GaussianFuzzySet(FuzzySet):
     """A fuzzy set defined by a gaussian function"""
@@ -161,6 +184,9 @@ class GaussianFuzzySet(FuzzySet):
 
     def __call__(self, x):
         return exp(-((x - self.c) / self.a) ** 2 / 2)
+
+    def _to_c(self, name):
+        return "exp(- pow(({x}-{c})/{a}, 2.0) / 2.0)".format(x=name, a=self.a, c=self.c)
 
 
 class BellFuzzySet(FuzzySet):
@@ -185,6 +211,9 @@ class BellFuzzySet(FuzzySet):
     def __call__(self, x):
         return 1 / (1 + ((x - self.c) / self.a) ** (2 * self.b))
 
+    def _to_c(self, name):
+        return "1 / (1 + pow(({x} - {c}) / {a}, 2*{b}) )".format(x=name, a=self.a, b=self.b, c=self.c)
+
 
 class SigmoidalFuzzySet(FuzzySet):
     """A fuzzy set defined by a sigmoid function"""
@@ -203,6 +232,9 @@ class SigmoidalFuzzySet(FuzzySet):
 
     def __call__(self, x):
         return 1 / (1 + exp(-self.a * (x - self.c)))
+
+    def _to_c(self, name):
+        return "1 / (1 + exp(-{a} * ({x} - {c})))".format(x=name, a=self.a, c=self.c)
 
 
 _set_types = {"singleton": SingletonSet, "discrete": DiscreteFuzzySet, "sigmoid": SigmoidalFuzzySet,

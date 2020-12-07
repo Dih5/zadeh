@@ -31,7 +31,7 @@ setup(author="Dih5",
       extras_require={
           "docs": ["nbsphinx", "sphinx-rtd-theme", "IPython"],
           "test": ["pytest"],
-          "extras": ["matplotlib", "ipywidgets"],
+          "extras": ["matplotlib", "ipywidgets", "jinja2"],
           "server": ["flask", "flask-restx"]
       },
       keywords=[],
