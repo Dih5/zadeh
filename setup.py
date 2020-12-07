@@ -23,10 +23,16 @@ setup(author="Dih5",
           'Programming Language :: Python :: 3.8',
       ],
       description='Python package to build fuzzy inference systems',
+      entry_points={
+          'console_scripts': [
+              'zadeh-server=zadeh.server:main',
+          ],
+      },
       extras_require={
           "docs": ["nbsphinx", "sphinx-rtd-theme", "IPython"],
           "test": ["pytest"],
           "extras": ["matplotlib", "ipywidgets"],
+          "server": ["flask", "flask-restx"]
       },
       keywords=[],
       long_description=long_description,
