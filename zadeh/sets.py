@@ -35,7 +35,7 @@ class FuzzySet:
 
     def __mul__(self, other):
         if isinstance(other, (float, int)):
-            return FuzzySet(lambda x: other * self(x))
+            return FuzzySetScaled(self, other)
         raise NotImplementedError("Multiplication is only defined with crisp numbers")
 
     def __rmul__(self, other):
@@ -44,21 +44,70 @@ class FuzzySet:
     # TODO: More generalized fuzzy set operations could be defined
 
     def __neg__(self):
-        return FuzzySet(lambda x: 1 - self(x))
+        return FuzzySetNeg(self)
 
     def __or__(self, other):
-        return FuzzySet(lambda x: max(self(x), other(x)))
+        return FuzzySetOr([self, other])
 
     def __and__(self, other):
-        return FuzzySet(lambda x: min(self(x), other(x)))
+        return FuzzySetAnd([self, other])
 
-    @staticmethod
-    def n_ary_or(sets):
-        return FuzzySet(lambda x: max(s(x) for s in sets))
 
-    @staticmethod
-    def n_ary_and(sets):
-        return FuzzySet(lambda x: min(s(x) for s in sets))
+class FuzzySetNeg(FuzzySet):
+    """A negation operation on a Fuzzy set"""
+
+    def __init__(self, set):
+        super().__init__()
+        self.set = set
+
+    def __call__(self, x):
+        return 1 - self.set(x)
+
+    def _to_c(self, name):
+        return "1 - (%s)" % self.set._to_c(name)
+
+
+class FuzzySetOr(FuzzySet):
+    """An OR operation between Fuzzy sets"""
+
+    def __init__(self, sets):
+        super().__init__()
+        self.sets = sets
+
+    def __call__(self, x):
+        return max(s(x) for s in self.sets)
+
+    def _to_c(self, name):
+        return "max(%d, %s)" % (len(self.sets), ", ".join(s._to_c(name) for s in self.sets))
+
+
+class FuzzySetAnd(FuzzySet):
+    """An AND operation between Fuzzy sets"""
+
+    def __init__(self, sets):
+        super().__init__()
+        self.sets = sets
+
+    def __call__(self, x):
+        return min(s(x) for s in self.sets)
+
+    def _to_c(self, name):
+        return "min(%d, %s)" % (len(self.sets), ", ".join(s._to_c(name) for s in self.sets))
+
+
+class FuzzySetScaled(FuzzySet):
+    """A scaled Fuzzy sets"""
+
+    def __init__(self, set, scale):
+        super().__init__()
+        self.set = set
+        self.scale = scale
+
+    def __call__(self, x):
+        return self.set(x) * self.scale
+
+    def _to_c(self, name):
+        return "%f * (%s)" % (self.scale, self.set._to_c(name))
 
 
 class SingletonSet(FuzzySet):

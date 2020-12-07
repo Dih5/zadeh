@@ -1,4 +1,4 @@
-from .sets import FuzzySet
+from .sets import FuzzySet, FuzzySetOr
 
 
 class FuzzyProposition:
@@ -240,7 +240,7 @@ class FuzzyRuleSet:
         # TODO: Consider multiple output
         # TODO: Add more methods
         # Mamdani inference
-        return FuzzySet.n_ary_or([rule(values) for rule in self.rule_list])
+        return FuzzySetOr([rule(values) for rule in self.rule_list])
 
     def __getitem__(self, item):
         return self.rule_list[item]
