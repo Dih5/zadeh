@@ -1,3 +1,4 @@
+import json
 import numpy as np
 
 try:
@@ -27,6 +28,18 @@ class FIS:
 
         # TODO: Support multitarget
         self.target = target
+
+    def save(self, path):
+        """Save the FIS definition to a path"""
+        with open(path, "w") as f:
+            json.dump(self._get_description(), f)
+
+    @staticmethod
+    def load(path):
+        """Load a FIS from the given path"""
+        with open(path) as f:
+            s = json.load(f)
+        return FIS._from_description(s)
 
     def _get_description(self):
         return {"variables": [v._get_description() for v in self.variables],
