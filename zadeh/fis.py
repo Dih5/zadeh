@@ -150,7 +150,7 @@ class FIS:
         if ipywidgets is None or plt is None:
             raise ModuleNotFoundError("ipywidgets and matplotlib are required")
 
-        free_variables = [v for v in self.variables if v != variable]
+        free_variables = [v for v in self.variables if v.name != variable.name]
 
         def plot(**kwargs):
             self.plot_1d(variable, kwargs)
@@ -228,7 +228,7 @@ class FIS:
         if ipywidgets is None or plt is None:
             raise ModuleNotFoundError("ipywidgets and matplotlib are required")
 
-        free_variables = [v for v in self.variables if (v != variable1 and v != variable2)]
+        free_variables = [v for v in self.variables if (v.name != variable1.name and v.name != variable2.name)]
 
         def plot(**kwargs):
             self.plot_2d(variable1, variable2, kwargs)
