@@ -21,6 +21,8 @@ class FIS:
 
     def __init__(self, variables, rules, target):
         self.variables = variables
+        if not isinstance(rules, FuzzyRuleSet):
+            rules = FuzzyRuleSet(rules)
         self.rules = rules
 
         # TODO: Support multitarget

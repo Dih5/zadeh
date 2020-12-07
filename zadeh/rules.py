@@ -35,6 +35,11 @@ class FuzzyProposition:
     def __invert__(self):
         return FuzzyNot(self)
 
+    def __rshift__(self, other):
+        if not isinstance(other, FuzzyProposition):
+            raise ValueError("Implications can only be constructed with a proposition as consequent")
+        return FuzzyRule(self, other)
+
 
 class FuzzyValuation(FuzzyProposition):
     """An elemental fuzzy proposition of the form '<variable> is <value>'"""
@@ -181,7 +186,7 @@ class FuzzyRule:
         # TODO: Add more methods
         # Mamdani inference
         cutoff = self.antecedent(values)
-        return FuzzySet(lambda x: min(cutoff, self.consequent.variable[self.consequent.value](x)))*self.weight
+        return FuzzySet(lambda x: min(cutoff, self.consequent.variable[self.consequent.value](x))) * self.weight
 
     def __repr__(self):
         return "FuzzyRule<%s>" % str(self)

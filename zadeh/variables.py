@@ -5,6 +5,7 @@ except ImportError:
 
 from .domains import Domain
 from .sets import FuzzySet
+from .rules import FuzzyValuation, FuzzyNotValuation
 
 
 class FuzzyVariable:
@@ -21,6 +22,16 @@ class FuzzyVariable:
         self.domain = domain
         self.values = values
         self.name = name if name is not None else self.domain.name
+
+    def __eq__(self, other):
+        if not isinstance(other, str):
+            raise ValueError("FuzzyVariable can only be compared to str values")
+        return FuzzyValuation(self, other)
+
+    def __ne__(self, other):
+        if not isinstance(other, str):
+            raise ValueError("FuzzyVariable can only be compared to str values")
+        return FuzzyNotValuation(self, other)
 
     def _get_description(self):
         return {"name": self.name,
