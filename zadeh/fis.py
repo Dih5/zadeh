@@ -255,3 +255,9 @@ class FIS:
         """Get a compiled version of the model"""
         from .compile import CompiledFIS
         return CompiledFIS.from_existing(self)
+
+    @staticmethod
+    def from_matlab(path):
+        """Import a MATLAB® model from a .fis file"""
+        from .mparser import read_mfis
+        return read_mfis(path)
