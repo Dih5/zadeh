@@ -82,6 +82,12 @@ def parse_mf(description):
         return value_name, sets.TrapezoidalFuzzySet(*pars)
     elif value_f == "gaussmf":
         return value_name, sets.GaussianFuzzySet(*pars)
+    elif value_f == "sigmf":
+        return value_name, sets.SigmoidalFuzzySet(*pars)
+    elif value_f == "psigmf":
+        return value_name, sets.SigmoidalProductFuzzySet(*pars)
+    elif value_f == "dsigmf":
+        return value_name, sets.SigmoidalDifferenceFuzzySet(*pars)
     else:
         raise ValueError("Unknown membership function: %s" % value_f)
 

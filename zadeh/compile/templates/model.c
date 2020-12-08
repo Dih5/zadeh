@@ -55,6 +55,14 @@ double weighted_mean(double *values, double* weights, int n){
     return sum/sum_weights;
 }
 
+double clip(double value){
+    if (value < 0)
+        return 0;
+    if (value > 1)
+        return 1;
+    return value;
+}
+
 
 
 double {{name}}(double {{target}}, {{inputs_typed}}){

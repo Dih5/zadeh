@@ -12,6 +12,11 @@ def _ensure_spaced(m, eps=1E-8):
     return np.cumsum(np.concatenate(([m[0]], np.where(d > 0, d, eps))))
 
 
+def _clip(x, min=0, max=1):
+    """Clip to interval, defaults to [0, 1]"""
+    return np.clip(x, min, max)
+
+
 class FuzzySet:
     """A fuzzy set"""
 
@@ -265,7 +270,15 @@ class BellFuzzySet(FuzzySet):
 
 
 class SigmoidalFuzzySet(FuzzySet):
-    """A fuzzy set defined by a sigmoid function"""
+    """
+    A fuzzy set defined by a sigmoid function
+
+    :math:`\\sigma_{a,c}(x)= \\frac{1}{1+e^{\\left(-a (x-c)\\right)}}`
+
+    If a>0, the sigmoid is increasing, otherwise decreasing.
+    The magnitude of "a" defines the width of the transition, "c" defines its location.
+
+    """
 
     def __init__(self, a, c):
         self.a = a
@@ -286,6 +299,80 @@ class SigmoidalFuzzySet(FuzzySet):
         return "1 / (1 + exp(-{a} * ({x} - {c})))".format(x=name, a=self.a, c=self.c)
 
 
+class SigmoidalProductFuzzySet(FuzzySet):
+    """
+    A fuzzy set defined by the product of two sigmoid functions
+
+    :math:`\\sigma_{a_1,c_1,a_2,c_2}^\\mathrm{p}(x)=\\sigma_{a_1,c_1}(x)\\cdot \\sigma_{a_2,c_2}(x)`
+
+    Typical unimodal membership functions are defined setting the opposite sign for (a1, a2),
+    and choosing (c1, c2) enough apart for both sigmoids reach ~1 in a common subset.
+
+
+    """
+
+    def __init__(self, a1, c1, a2, c2):
+        self.a1 = a1
+        self.c1 = c1
+        self.a2 = a2
+        self.c2 = c2
+        super().__init__()
+
+    def _get_description(self):
+        return {"type": "sigmoidal_product", "a1": self.a1, "c1": self.c1, "a2": self.a2, "c2": self.c2}
+
+    @staticmethod
+    def _from_description(description):
+        return SigmoidalProductFuzzySet(description["a1"], description["c1"], description["a2"], description["c2"])
+
+    def __call__(self, x):
+        return (1 / (1 + exp(-self.a1 * (x - self.c1)))) * (1 / (1 + exp(-self.a2 * (x - self.c2))))
+
+    def _to_c(self, name):
+        return "(1 / (1 + exp(-{a1} * ({x} - {c1})))) * (1 / (1 + exp(-{a2} * ({x} - {c2}))))".format(x=name,
+                                                                                                      a1=self.a1,
+                                                                                                      c1=self.c1,
+                                                                                                      a2=self.a2,
+                                                                                                      c2=self.c2)
+
+
+class SigmoidalDifferenceFuzzySet(FuzzySet):
+    """
+    A fuzzy set defined by the difference of two sigmoid functions clipped to [0, 1]
+
+    :math:`\\sigma_{a_1,c_1,a_2,c_2}^\\mathrm{d}(x)=\\mathrm{clip}_{0,1}(\\sigma_{a_1,c_1}(x) - \\sigma_{a_2,c_2}(x))`
+
+
+    Typical unimodal membership functions are defined setting the same sign for (a1, a2),
+    and choosing (c1, c2) enough apart for both sigmoids reach ~1 in a common subset.
+    """
+
+    def __init__(self, a1, c1, a2, c2):
+        self.a1 = a1
+        self.c1 = c1
+        self.a2 = a2
+        self.c2 = c2
+        super().__init__()
+
+    def _get_description(self):
+        return {"type": "sigmoidal_difference", "a1": self.a1, "c1": self.c1, "a2": self.a2, "c2": self.c2}
+
+    @staticmethod
+    def _from_description(description):
+        return SigmoidalDifferenceFuzzySet(description["a1"], description["c1"], description["a2"], description["c2"])
+
+    def __call__(self, x):
+        return _clip((1 / (1 + exp(-self.a1 * (x - self.c1)))) - (1 / (1 + exp(-self.a2 * (x - self.c2)))))
+
+    def _to_c(self, name):
+        return "clip((1 / (1 + exp(-{a1} * ({x} - {c1})))) - (1 / (1 + exp(-{a2} * ({x} - {c2})))))".format(x=name,
+                                                                                                            a1=self.a1,
+                                                                                                            c1=self.c1,
+                                                                                                            a2=self.a2,
+                                                                                                            c2=self.c2)
+
+
 _set_types = {"singleton": SingletonSet, "discrete": DiscreteFuzzySet, "sigmoid": SigmoidalFuzzySet,
+              "sigmoidal_product": SigmoidalProductFuzzySet, "sigmoidal_difference": SigmoidalDifferenceFuzzySet,
               "bell": BellFuzzySet, "gaussian": GaussianFuzzySet, "trapezoidal": TrapezoidalFuzzySet,
               "triangular": TriangularFuzzySet}
