@@ -15,12 +15,13 @@ except ImportError:
 
 from .variables import FuzzyVariable
 from .rules import FuzzyRuleSet
+from .context import FuzzyContext, set_fuzzy_context
 
 
 class FIS:
     """A fuzzy inference system"""
 
-    def __init__(self, variables, rules, target):
+    def __init__(self, variables, rules, target, defuzzification="centroid"):
         self.variables = variables
         if not isinstance(rules, FuzzyRuleSet):
             rules = FuzzyRuleSet(rules)
@@ -28,6 +29,8 @@ class FIS:
 
         # TODO: Support multitarget
         self.target = target
+
+        self.context = FuzzyContext(defuzzification=defuzzification)
 
     def save(self, path):
         """Save the FIS definition to a path"""
@@ -44,19 +47,25 @@ class FIS:
     def _get_description(self):
         return {"variables": [v._get_description() for v in self.variables],
                 "rules": self.rules._get_description(),
-                "target": self.target._get_description()}
+                "target": self.target._get_description(),
+                "defuzzification": self.context.defuzzification
+                }
 
     @staticmethod
     def _from_description(description):
         variables = [FuzzyVariable._from_description(d) for d in description["variables"]]
         target_variable = FuzzyVariable._from_description(description["target"])
         variables_dict = {**{v.name: v for v in variables}, target_variable.name: target_variable}
+
+        defuzzification = description.get("defuzzification", "centroid")
         return FIS(variables,
                    FuzzyRuleSet._from_description(description["rules"], variables_dict),
-                   target_variable)
+                   target_variable,
+                   defuzzification=defuzzification)
 
     def _to_c(self):
-        return self.rules._to_c()
+        with set_fuzzy_context(self.context):
+            return self.rules._to_c()
 
     def get_output(self, values):
         """
@@ -69,7 +78,8 @@ class FIS:
             FuzzySet: The fuzzy set
 
         """
-        return self.rules(values)
+        with set_fuzzy_context(self.context):
+            return self.rules(values)
 
     def get_crisp_output(self, values):
         """
@@ -82,7 +92,8 @@ class FIS:
             Centroid of the output of the system
 
         """
-        return self.target.domain.centroid(self.get_output(values))
+        with set_fuzzy_context(self.context):
+            return self.target.domain.defuzzify(self.get_output(values))
 
     def dict_to_ordered(self, values):
         """Transform a dict of inputs into an array in the FIS order"""
@@ -101,9 +112,11 @@ class FIS:
 
         def plot(**kwargs):
             output = self.get_output(kwargs)
+            with set_fuzzy_context(self.context):
+                crisp_value = self.target.domain.defuzzify(output)
             self.target.domain.plot_set(output)
-            plt.vlines(self.target.domain.centroid(output), *plt.ylim(), color="red")
-            plt.legend(["Fuzzy output", "Centroid"])
+            plt.vlines(crisp_value, *plt.ylim(), color="red")
+            plt.legend(["Fuzzy output", "Crisp"])
             plt.show()
 
         ipywidgets.interact(plot,

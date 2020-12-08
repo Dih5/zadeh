@@ -1,4 +1,7 @@
+import bisect
 import numpy as np
+
+from .context import get_active_context
 
 try:
     import matplotlib.pyplot as plt
@@ -41,8 +44,8 @@ class Domain:
         plt.xlabel(self.name)
         plt.ylabel("Membership function")
 
-    def centroid(self, set):
-        """Calculate the centroid of a fuzzy set"""
+    def defuzzify(self, set):
+        """Calculate a crisp number from the fuzzy set"""
         raise NotImplementedError("A Domain subclass must be used instead.")
 
     def get_ipywidget(self, **kwargs):
@@ -80,12 +83,59 @@ class FloatDomain(Domain):
         else:
             raise ValueError("Bad type for steps")
 
+    def defuzzify(self, set):
+        method = get_active_context().defuzzification
+        if method == "centroid":
+            return self.centroid(set)
+        elif method == "bisector":
+            return self.bisector(set)
+        elif method == "mom":
+            return self.mom(set)
+        elif method == "som":
+            return self.som(set)
+        elif method == "lom":
+            return self.lom(set)
+
+        raise ValueError("Invalid defuzzification method in context: %s" % method)
+
     def centroid(self, set):
+        """Defuzzify with the centroid (center of mass)"""
         xx, mu = self.evaluate_set(set)
         try:
             return np.average(xx, weights=mu)
         except ZeroDivisionError:
             return np.nan
+
+    def bisector(self, set):
+        """Defuzzify with the bisector (value separating two portions of equal area under the membership function)"""
+        xx, mu = self.evaluate_set(set)
+
+        cum_mu = np.cumsum(mu)
+        # TODO: This could actually be improved interpolating with the nearest values
+        mean_pos = bisect.bisect_left(cum_mu, cum_mu[-1] / 2)
+
+        return xx[mean_pos]
+
+    def mom(self, set):
+        """Defuzzify with the middle of maximum"""
+        xx, mu = self.evaluate_set(set)
+        max_mu = max(mu)
+        xx_max = [x for x, m in zip(xx, mu) if m == max_mu]
+        return np.median(xx_max)
+
+    def som(self, set):
+        """Defuzzify with the smaller of maximum"""
+        xx, mu = self.evaluate_set(set)
+        max_mu = max(mu)
+        xx_max = [x for x, m in zip(xx, mu) if m == max_mu]
+        return min(xx_max)
+
+    def lom(self, set):
+        """Defuzzify with the largest of maximum"""
+        xx, mu = self.evaluate_set(set)
+        max_mu = max(mu)
+        xx_max = [x for x, m in zip(xx, mu) if m == max_mu]
+        return max(xx_max)
 
     def get_ipywidget(self, **kwargs):
         if ipywidgets is None:

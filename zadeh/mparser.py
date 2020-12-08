@@ -28,15 +28,17 @@ def read_mfis(path, steps=100):
         raise NotImplementedError("Implementation method not implemented")
     if config["System"]["AggMethod"] != "'max'":
         raise NotImplementedError("Aggregation method not implemented")
-    if config["System"]["DefuzzMethod"] != "'centroid'":
-        raise NotImplementedError("Defuzzification method not implemented")
 
     inputs = [parse_variable(config["Input%d" % i], steps) for i in range(1, num_inputs + 1)]
     output = parse_variable(config["Output1"], steps)
 
     rules_ = [parse_rule(*x, inputs, output) for x in config["Rules"].items()]
 
-    return fis.FIS(inputs, rules.FuzzyRuleSet(rules_), output)
+    defuzzification = config["System"]["DefuzzMethod"][1:-1]
+    if defuzzification not in ["centroid", "bisector", "som", "mom", "lom"]:
+        raise ValueError("Invalid defuzzification: %s" % defuzzification)
+
+    return fis.FIS(inputs, rules.FuzzyRuleSet(rules_), output, defuzzification=defuzzification)
 
 
 def parse_variable(variable, steps=100):

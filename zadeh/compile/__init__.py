@@ -70,8 +70,8 @@ def compile_model(model, function_name="f"):
 class CompiledFIS(FIS):
     """A compiled version of a FIS"""
 
-    def __init__(self, variables, rules, target):
-        super().__init__(variables, rules, target)
+    def __init__(self, variables, rules, target, defuzzification="centroid"):
+        super().__init__(variables, rules, target, defuzzification=defuzzification)
 
         self.f, self.f_crisp = compile_model(self)
 
@@ -86,11 +86,15 @@ class CompiledFIS(FIS):
         Returns:
             CompiledFIS: A compiled version of the FIS
         """
-        return CompiledFIS(fis.variables, fis.rules, fis.target)
+        return CompiledFIS(fis.variables, fis.rules, fis.target, defuzzification=fis.context.defuzzification)
 
     def get_output(self, values):
         return FuzzySet(lambda x: self.f(x, *self.dict_to_ordered(values)))
 
     def get_crisp_output(self, values):
-        return self.f_crisp(self.target.domain.min, self.target.domain.max, self.target.domain.steps,
-                            *self.dict_to_ordered(values))
+        if self.context.defuzzification == "centroid":
+            return self.f_crisp(self.target.domain.min, self.target.domain.max, self.target.domain.steps,
+                                *self.dict_to_ordered(values))
+        else:
+            # TODO: Falling back to deffuzy in Python. Other methods should be implemented in C for improved performance.
+            return super().get_crisp_output(values)
