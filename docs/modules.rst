@@ -1,5 +1,5 @@
-zadeh
-=====
+Package documentation
+=====================
 
 .. toctree::
    :maxdepth: 4

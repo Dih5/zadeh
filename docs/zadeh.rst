@@ -1,6 +1,14 @@
 zadeh package
 =============
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   zadeh.compile
+
 Submodules
 ----------
 
@@ -20,10 +28,26 @@ zadeh.fis module
    :undoc-members:
    :show-inheritance:
 
+zadeh.mparser module
+--------------------
+
+.. automodule:: zadeh.mparser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 zadeh.rules module
 ------------------
 
 .. automodule:: zadeh.rules
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+zadeh.server module
+-------------------
+
+.. automodule:: zadeh.server
    :members:
    :undoc-members:
    :show-inheritance:
