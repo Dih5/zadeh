@@ -63,6 +63,21 @@ double clip(double value){
     return value;
 }
 
+
+double gauss(double x, double s, double a){
+    return exp(- pow((x-a)/s, 2.0) / 2.0);
+}
+
+
+double gauss2(double x, double s1, double a1, double s2, double a2){
+    if (a1 <= x && x<=a2)
+        return 1.0;
+    if (x < a1)
+        return gauss(x, s1, a1);
+    return gauss(x, s2, a2);
+}
+
+
 double s_shaped(double x, double a, double b){
     if (x <= a)
         return 0.0;

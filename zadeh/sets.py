@@ -221,26 +221,94 @@ class TrapezoidalFuzzySet(FuzzySet):
                                                                                                        d=self.d)
 
 
-class GaussianFuzzySet(FuzzySet):
-    """A fuzzy set defined by a gaussian function"""
+def _gauss(x, s, a):
+    return exp(-((x - a) / s) ** 2 / 2)
 
-    def __init__(self, a, c):
+
+class GaussianFuzzySet(FuzzySet):
+    """A fuzzy set defined by a Gaussian function
+
+    .. math::
+
+        G_{s,a}(x) = \\mathrm{e}^{-\\frac{{(x - a)}^2}{2 s^2}}
+
+    Parameters:
+        s: Width of the Gaussian.
+        a: Position of the peak of the Gaussian.
+
+    """
+
+    def __init__(self, s, a):
+        self.s = s
         self.a = a
-        self.c = c
+
         super().__init__()
 
     def _get_description(self):
-        return {"type": "gaussian", "a": self.a, "c": self.c}
+        return {"type": "gaussian", "s": self.s, "a": self.a}
 
     @staticmethod
     def _from_description(description):
-        return GaussianFuzzySet(description["a"], description["c"])
+        return GaussianFuzzySet(description["s"], description["a"])
 
     def __call__(self, x):
-        return exp(-((x - self.c) / self.a) ** 2 / 2)
+        return _gauss(x, self.s, self.a)
 
     def _to_c(self, name):
-        return "exp(- pow(({x}-{c})/{a}, 2.0) / 2.0)".format(x=name, a=self.a, c=self.c)
+        return "gauss({x}, {s}, {a})".format(x=name, s=self.s, a=self.a)
+
+
+def _gauss2(x, s1, a1, s2, a2):
+    if a1 <= x <= a2:
+        return 1
+    if x < a1:
+        return _gauss(x, s1, a1)
+    return _gauss(x, s2, a2)
+
+
+class Gaussian2FuzzySet(FuzzySet):
+    """
+    A fuzzy set defined by two Gaussian functions
+
+    .. math::
+
+
+        G^2_{s_1,a_1,s_2,a_2}(x) =
+                 \\begin{cases}
+                   G_{s_1, a_1}(x), &\\quad\\text{if } x\\leq a_1\\\\
+                   1, &\\quad\\text{if } a_1 \\leq x \\leq a_2\\\\
+                   G_{s_2, a_2}(x), &\\quad\\text{if } x\\geq a_2\\\\
+                 \\end{cases}
+
+    Parameters:
+        s1: Width of the first Gaussian.
+        a1: Start of the membership=1.0 plateau.
+        s2: Width of the second Gaussian.
+        a2: End of the membership=1.0 plateau.
+
+    """
+
+    def __init__(self, s1, a1, s2, a2):
+        assert a1 <= a2, "Positions must be ordered (a1 <= a2)"
+        self.s1 = s1
+        self.a1 = a1
+        self.s2 = s2
+        self.a2 = a2
+
+        super().__init__()
+
+    def _get_description(self):
+        return {"type": "gaussian2", "s1": self.s1, "a1": self.a1, "s2": self.s2, "a2": self.a2}
+
+    @staticmethod
+    def _from_description(description):
+        return Gaussian2FuzzySet(description["s1"], description["a1"], description["s2"], description["a2"])
+
+    def __call__(self, x):
+        return _gauss2(x, self.s1, self.a1, self.s2, self.a2)
+
+    def _to_c(self, name):
+        return "gauss2({x}, {s1}, {a1}, {s2}, {a2})".format(x=name, s1=self.s1, a1=self.a1, s2=self.s2, a2=self.a2)
 
 
 class BellFuzzySet(FuzzySet):
@@ -503,5 +571,5 @@ class PiFuzzySet(FuzzySet):
 _set_types = {"singleton": SingletonSet, "discrete": DiscreteFuzzySet, "sigmoid": SigmoidalFuzzySet,
               "sigmoidal_product": SigmoidalProductFuzzySet, "sigmoidal_difference": SigmoidalDifferenceFuzzySet,
               "s_shaped": SFuzzySet, "z_shaped": ZFuzzySet, "pi_shaped": PiFuzzySet,
-              "bell": BellFuzzySet, "gaussian": GaussianFuzzySet, "trapezoidal": TrapezoidalFuzzySet,
-              "triangular": TriangularFuzzySet}
+              "bell": BellFuzzySet, "gaussian": GaussianFuzzySet, "gaussian2": Gaussian2FuzzySet,
+              "triangular": TriangularFuzzySet, "trapezoidal": TrapezoidalFuzzySet}

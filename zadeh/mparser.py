@@ -67,6 +67,7 @@ _direct_equivalence_sets = {
     "trimf": sets.TriangularFuzzySet,
     "trapmf": sets.TrapezoidalFuzzySet,
     "gaussmf": sets.GaussianFuzzySet,
+    "gauss2mf": sets.Gaussian2FuzzySet,
     "sigmf": sets.SigmoidalFuzzySet,
     "psigmf": sets.SigmoidalProductFuzzySet,
     "dsigmf": sets.SigmoidalDifferenceFuzzySet,
