@@ -43,9 +43,16 @@ def compile_model(model, function_name="f"):
         lib_path = os.path.join(__compiled_dir, os.path.basename(f.name)[:-2] + ".so")
         f.write(code)
         f.seek(0)
-        proc = subprocess.run("%s %s %s -o %s %s" % (CC, FLAGS, LDFLAGS, lib_path, f.name), shell=True)
+        proc = subprocess.run("%s %s %s -o %s %s" % (CC, FLAGS, LDFLAGS, lib_path, f.name), shell=True,
+                              capture_output=True
+                              )
 
-    proc.check_returncode()
+    try:
+        proc.check_returncode()
+    except subprocess.CalledProcessError as e:
+        print(proc.stdout.decode())
+        print(proc.stderr.decode())
+        raise RuntimeError("An error occurred compiling the code. Output printed for debugging purposes.") from e
 
     dll = ctypes.CDLL(lib_path)
     f = getattr(dll, function_name)
