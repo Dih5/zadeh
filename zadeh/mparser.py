@@ -62,6 +62,17 @@ def parse_variable(variable, steps=100):
     return v
 
 
+# Mapping from Matlab MF to the equivalent FuzzySet class (ordered parameters must be equivalent as well)
+_direct_equivalence_sets = {
+    "trimf": sets.TriangularFuzzySet,
+    "trapmf": sets.TrapezoidalFuzzySet,
+    "gaussmf": sets.GaussianFuzzySet,
+    "sigmf": sets.SigmoidalFuzzySet,
+    "psigmf": sets.SigmoidalProductFuzzySet,
+    "dsigmf": sets.SigmoidalDifferenceFuzzySet,
+}
+
+
 def parse_mf(description):
     """
     Parse a membership function
@@ -76,18 +87,8 @@ def parse_mf(description):
     value_name, value_f, pars = re.match(r"'(.*)':'(.*)',\[(.*)\]", description).groups()
     pars = [float(x) for x in pars.split()]
 
-    if value_f == "trimf":
-        return value_name, sets.TriangularFuzzySet(*pars)
-    elif value_f == "trapmf":
-        return value_name, sets.TrapezoidalFuzzySet(*pars)
-    elif value_f == "gaussmf":
-        return value_name, sets.GaussianFuzzySet(*pars)
-    elif value_f == "sigmf":
-        return value_name, sets.SigmoidalFuzzySet(*pars)
-    elif value_f == "psigmf":
-        return value_name, sets.SigmoidalProductFuzzySet(*pars)
-    elif value_f == "dsigmf":
-        return value_name, sets.SigmoidalDifferenceFuzzySet(*pars)
+    if value_f in _direct_equivalence_sets:
+        return value_name, _direct_equivalence_sets[value_f](*pars)
     else:
         raise ValueError("Unknown membership function: %s" % value_f)
 
