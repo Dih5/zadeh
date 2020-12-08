@@ -372,7 +372,136 @@ class SigmoidalDifferenceFuzzySet(FuzzySet):
                                                                                                             c2=self.c2)
 
 
+def _s_shaped(x, a, b):
+    if x <= a:
+        return 0.0
+    if x >= b:
+        return 1.0
+    if x <= (a + b) / 2:  # (a, (a+b)/2]
+        return 2.0 * ((x - a) / (b - a)) ** 2
+    # ((a+b)/2, b)
+    return 1.0 - 2.0 * ((x - b) / (b - a)) ** 2
+
+
+class SFuzzySet(FuzzySet):
+    """
+    A fuzzy set defined by an S-shaped function.
+
+    .. math::
+
+        S_{a,b}(x) =
+             \\begin{cases}
+               0, &\\quad\\text{if } x\\leq a\\\\
+               2\\left(\\frac{x-a}{b-a}\\right)^2, &\\quad\\text{if } a \\leq x\\leq \\frac{a+b}{2}\\\\
+               1-2\\left(\\frac{x-b}{b-a}\\right)^2, &\\quad\\text{if } \\frac{a+b}{2} \\leq x \\leq b\\\\
+               1, &\\quad\\text{if } x\\geq b\\\\
+             \\end{cases}
+
+
+
+    """
+
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+        super().__init__()
+
+    def _get_description(self):
+        return {"type": "s_shaped", "a": self.a, "b": self.b}
+
+    @staticmethod
+    def _from_description(description):
+        return SFuzzySet(description["a"], description["b"])
+
+    def __call__(self, x):
+        return _s_shaped(x, self.a, self.b)
+
+    def _to_c(self, name):
+        return "s_shaped({x}, {a}, {b})".format(x=name, a=self.a, b=self.b)
+
+
+def _z_shaped(x, a, b):
+    if x <= a:
+        return 1.0
+    if x >= b:
+        return 0.0
+    if x <= (a + b) / 2:  # (a, (a+b)/2]
+        return 1.0 - 2.0 * ((x - a) / (b - a)) ** 2
+    # ((a+b)/2, b)
+    return 2.0 * ((x - b) / (b - a)) ** 2
+
+
+class ZFuzzySet(FuzzySet):
+    """
+    A fuzzy set defined by a Z-shaped function
+
+    .. math::
+
+        Z_{a,b}(x) =
+             \\begin{cases}
+               0, &\\quad\\text{if } x\\leq a\\\\
+               1-2\\left(\\frac{x-a}{b-a}\\right)^2, &\\quad\\text{if } a \\leq x\\leq \\frac{a+b}{2}\\\\
+               2\\left(\\frac{x-b}{b-a}\\right)^2, &\\quad\\text{if } \\frac{a+b}{2} \\leq x \\leq b\\\\
+               1, &\\quad\\text{if } x\\geq b\\\\
+             \\end{cases}
+
+
+
+    """
+
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+        super().__init__()
+
+    def _get_description(self):
+        return {"type": "z_shaped", "a": self.a, "b": self.b}
+
+    @staticmethod
+    def _from_description(description):
+        return ZFuzzySet(description["a"], description["b"])
+
+    def __call__(self, x):
+        return _z_shaped(x, self.a, self.b)
+
+    def _to_c(self, name):
+        return "z_shaped({x}, {a}, {b})".format(x=name, a=self.a, b=self.b)
+
+
+class PiFuzzySet(FuzzySet):
+    """
+    A fuzzy set defined by a Pi-shaped function (a combination of S-shaped MF followed by a Z-shaped MF)
+
+    .. math::
+
+        Z_{a,b,c,d}(x) = S_{a,b}(x)\\cdot Z_{c,d}(x)
+
+    """
+
+    def __init__(self, a, b, c, d):
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+        super().__init__()
+
+    def _get_description(self):
+        return {"type": "pi_shaped", "a": self.a, "b": self.b, "c": self.c, "d": self.d}
+
+    @staticmethod
+    def _from_description(description):
+        return PiFuzzySet(description["a"], description["b"], description["c"], description["d"])
+
+    def __call__(self, x):
+        return _s_shaped(x, self.a, self.b) * _z_shaped(x, self.c, self.d)
+
+    def _to_c(self, name):
+        return "s_shaped({x}, {a}, {b}) * z_shaped({x}, {c}, {d})".format(x=name, a=self.a, b=self.b, c=self.c,
+                                                                          d=self.d)
+
+
 _set_types = {"singleton": SingletonSet, "discrete": DiscreteFuzzySet, "sigmoid": SigmoidalFuzzySet,
               "sigmoidal_product": SigmoidalProductFuzzySet, "sigmoidal_difference": SigmoidalDifferenceFuzzySet,
+              "s_shaped": SFuzzySet, "z_shaped": ZFuzzySet, "pi_shaped": PiFuzzySet,
               "bell": BellFuzzySet, "gaussian": GaussianFuzzySet, "trapezoidal": TrapezoidalFuzzySet,
               "triangular": TriangularFuzzySet}

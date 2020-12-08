@@ -63,6 +63,28 @@ double clip(double value){
     return value;
 }
 
+double s_shaped(double x, double a, double b){
+    if (x <= a)
+        return 0.0;
+    if (x >= b)
+        return 1.0;
+    if (x <= (a + b) / 2.0)  // (a, (a+b)/2]
+        return 2 * pow(((x - a) / (b - a)), 2);
+    // ((a+b)/2, b)
+    return 1 - 2 * pow(((x - b) / (b - a)),  2);
+}
+
+
+double z_shaped(double x, double a, double b){
+    if (x <= a)
+        return 1.0;
+    if (x >= b)
+        return 0.0;
+    if (x <= (a + b) / 2.0)  // (a, (a+b)/2]
+        return 1 - 2 * pow(((x - a) / (b - a)), 2);
+    // ((a+b)/2, b)
+    return 2 * pow(((x - b) / (b - a)),  2);
+}
 
 
 double {{name}}(double {{target}}, {{inputs_typed}}){

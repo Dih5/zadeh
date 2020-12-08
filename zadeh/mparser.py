@@ -70,6 +70,9 @@ _direct_equivalence_sets = {
     "sigmf": sets.SigmoidalFuzzySet,
     "psigmf": sets.SigmoidalProductFuzzySet,
     "dsigmf": sets.SigmoidalDifferenceFuzzySet,
+    "smf": sets.SFuzzySet,
+    "zmf": sets.ZFuzzySet,
+    "pimf": sets.PiFuzzySet,
 }
 
 
