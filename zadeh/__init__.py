@@ -1,6 +1,6 @@
 """zadeh - Python package to build fuzzy inference systems"""
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Dih5 <dihedralfive@gmail.com>'
 __all__ = []
 

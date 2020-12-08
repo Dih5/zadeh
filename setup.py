@@ -41,6 +41,6 @@ setup(author="Dih5",
       packages=find_packages(include=['zadeh'], exclude=["demos", "tests", "docs"]),
       install_requires=["numpy"],
       url='https://github.com/dih5/zadeh',
-      version='0.1.0',
+      version='0.2.0',
 
       )
