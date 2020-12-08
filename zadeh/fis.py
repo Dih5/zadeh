@@ -250,3 +250,8 @@ class FIS:
         ipywidgets.interact(plot,
                             **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
                                variable in free_variables})
+
+    def compile(self):
+        """Get a compiled version of the model"""
+        from .compile import CompiledFIS
+        return CompiledFIS.from_existing(self)
