@@ -2,6 +2,11 @@ import json
 import numpy as np
 
 try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+try:
     import ipywidgets
 except ImportError:
     ipywidgets = None
@@ -94,6 +99,27 @@ class FIS:
         """
         with set_fuzzy_context(self.context):
             return self.target.domain.defuzzify(self.get_output(values))
+
+    def batch_predict(self, X):
+        """
+        Get the crisp output for a batch of inputs
+
+        Args:
+            X (pd.DataFrame or np.array or list of list): Input values. If pandas dataframe, must have a column for
+                                                          each of the variables with the same name. If array-like, order
+                                                          must be consistent with the variables.
+
+        Returns:
+            np.array: An array with the predictions.
+            
+        """
+        # Pandas dataframe syntax -- if available
+        if pd is not None and isinstance(X, pd.DataFrame):
+            return np.asarray(
+                [self.get_crisp_output({v.name: x[v.name] for v in self.variables}) for _, x in X.iterrows()])
+
+        # Assuming ordered array-like input
+        return np.asarray([self.get_crisp_output({v.name: x[i] for i, v in enumerate(self.variables)}) for x in X])
 
     def dict_to_ordered(self, values):
         """Transform a dict of inputs into an array in the FIS order"""
