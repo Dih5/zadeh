@@ -9,4 +9,3 @@ from .sets import *
 from .variables import *
 from .rules import *
 from .fis import *
-from .mparser import read_mfis
