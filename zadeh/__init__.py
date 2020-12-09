@@ -9,3 +9,4 @@ from .sets import *
 from .variables import *
 from .rules import *
 from .fis import *
+from .tune import FuzzyGridTune
