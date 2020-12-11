@@ -5,8 +5,12 @@ from contextlib import contextmanager
 class FuzzyContext:
     """Define contextual information on how the fuzzy operations are formalized"""
 
-    def __init__(self, defuzzification="centroid"):
+    def __init__(self, defuzzification="centroid", aggregation="max", implication="min", OR="max", AND="min"):
         self.defuzzification = defuzzification
+        self.aggregation = aggregation
+        self.implication = implication
+        self.OR = OR
+        self.AND = AND
 
 
 # Global variable set by the context manager. Note references to it are getting when import is made, so it cannot be used directly

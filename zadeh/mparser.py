@@ -4,9 +4,22 @@ import configparser
 
 from . import sets, variables, domains, fis, rules
 
-
 # For a general reference on the format cf:
 # http://functionbay.com/documentation/onlinehelp/default.htm#!Documents/introductiontothefisfileformat.htm
+
+# Aggregation method converter
+_aggregation_methods = {"max": "max", "sum": "bsum", "probor": "psum"}
+
+# Implication method converter
+_implication_methods = {"min": "min", "prod": "prod"}
+
+# OR method converter
+_OR_methods = {"max": "max", "sum": "bsum", "probor": "psum"}
+# Sum does not appear in the docs, but we don't mind adding
+
+# AND method converter
+_AND_methods = {"min": "min", "prod": "prod"}
+
 
 def read_mfis(path, steps=100):
     """Parse a MATLAB® Fuzzy Inference System-like file"""
@@ -18,16 +31,8 @@ def read_mfis(path, steps=100):
     # Raise errors for non-supported options
     if num_outputs != 1:
         raise NotImplementedError("Only one output is supported")
-    if config["System"]["AndMethod"] != "'min'":
-        raise NotImplementedError("And method not implemented")
-    if config["System"]["OrMethod"] != "'max'":
-        raise NotImplementedError("Or method not implemented")
     if config["System"]["Type"] != "'mamdani'":
         raise NotImplementedError("Type of inference not implemented")
-    if config["System"]["ImpMethod"] != "'min'":
-        raise NotImplementedError("Implementation method not implemented")
-    if config["System"]["AggMethod"] != "'max'":
-        raise NotImplementedError("Aggregation method not implemented")
 
     inputs = [parse_variable(config["Input%d" % i], steps) for i in range(1, num_inputs + 1)]
     output = parse_variable(config["Output1"], steps)
@@ -38,7 +43,32 @@ def read_mfis(path, steps=100):
     if defuzzification not in ["centroid", "bisector", "som", "mom", "lom"]:
         raise ValueError("Invalid defuzzification: %s" % defuzzification)
 
-    return fis.FIS(inputs, rules.FuzzyRuleSet(rules_), output, defuzzification=defuzzification)
+    aggregation = config["System"]["AggMethod"][1:-1]
+    try:
+        aggregation = _aggregation_methods[aggregation]
+    except KeyError as e:
+        raise ValueError("Invalid aggregation: %s" % aggregation) from e
+
+    implication = config["System"]["ImpMethod"][1:-1]
+    try:
+        implication = _implication_methods[implication]
+    except KeyError as e:
+        raise ValueError("Invalid implication: %s" % implication) from e
+
+    AND = config["System"]["AndMethod"][1:-1]
+    try:
+        AND = _AND_methods[AND]
+    except KeyError as e:
+        raise ValueError("Invalid AND method: %s" % AND) from e
+
+    OR = config["System"]["OrMethod"][1:-1]
+    try:
+        OR = _OR_methods[OR]
+    except KeyError as e:
+        raise ValueError("Invalid OR method: %s" % OR) from e
+
+    return fis.FIS(inputs, rules.FuzzyRuleSet(rules_), output, defuzzification=defuzzification, aggregation=aggregation,
+                   implication=implication, AND=AND, OR=OR)
 
 
 def parse_variable(variable, steps=100):

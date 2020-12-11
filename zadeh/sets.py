@@ -2,6 +2,17 @@ from math import exp
 
 import numpy as np
 
+from .context import get_active_context
+
+try:
+    from math import prod  # Python >= 3.8
+except ImportError:
+    def prod(xx):
+        result = 1
+        for x in xx:
+            result *= x
+        return result
+
 
 def _ensure_spaced(m, eps=1E-8):
     """Ensure a list of numbers is ordered and with no repetitions, slightly shifting them if needed"""
@@ -75,29 +86,63 @@ class FuzzySetNeg(FuzzySet):
 class FuzzySetOr(FuzzySet):
     """An OR operation between Fuzzy sets"""
 
-    def __init__(self, sets):
+    def __init__(self, sets, method=None):
         super().__init__()
         self.sets = sets
+        self.method = method
 
     def __call__(self, x):
-        return max(s(x) for s in self.sets)
+        method = get_active_context().OR if self.method is None else self.method
+        if method == "max":
+            return max(s(x) for s in self.sets)
+        elif method == "psum":
+            return 1 - prod(1 - s(x) for s in self.sets)
+        elif method == "bsum":
+            return min(1, sum(s(x) for s in self.sets))
+        else:
+            raise ValueError("Invalid OR method in context: %s" % method)
 
     def _to_c(self, name):
-        return "max(%d, %s)" % (len(self.sets), ", ".join(s._to_c(name) for s in self.sets))
+        method = get_active_context().OR if self.method is None else self.method
+        if method == "max":
+            return "max(%d, %s)" % (len(self.sets), ", ".join(s._to_c(name) for s in self.sets))
+        elif method == "psum":
+            return "1 - %s" % " * ".join("(1 - %s)" % s._to_c(name) for s in self.sets)
+        elif method == "bsum":
+            return "min(2, 1, %s)" % " + ".join("(%s)" % s._to_c(name) for s in self.sets)
+        else:
+            raise ValueError("Invalid OR method in context: %s" % method)
 
 
 class FuzzySetAnd(FuzzySet):
     """An AND operation between Fuzzy sets"""
 
-    def __init__(self, sets):
+    def __init__(self, sets, method=None):
         super().__init__()
         self.sets = sets
+        self.method = method
 
     def __call__(self, x):
-        return min(s(x) for s in self.sets)
+        method = get_active_context().AND if self.method is None else self.method
+        if method == "min":
+            return min(s(x) for s in self.sets)
+        elif method == "product":
+            return prod(s(x) for s in self.sets)
+        elif method == "lukasiewicz":
+            return max(0, sum(s(x) for s in self.sets) - (len(self.sets) - 1))
+        else:
+            raise ValueError("Invalid AND method in context: %s" % method)
 
     def _to_c(self, name):
-        return "min(%d, %s)" % (len(self.sets), ", ".join(s._to_c(name) for s in self.sets))
+        method = get_active_context().AND if self.method is None else self.method
+        if method == "min":
+            return "min(%d, %s)" % (len(self.sets), ", ".join(s._to_c(name) for s in self.sets))
+        elif method == "product":
+            return " * ".join("(%s)" % s._to_c(name) for s in self.sets)
+        elif method == "lukasiewicz":
+            return "max(2, 0, %s - %d)" % (" + ".join(s._to_c(name) for s in self.sets), len(self.sets) - 1)
+        else:
+            raise ValueError("Invalid OR method in context: %s" % method)
 
 
 class FuzzySetScaled(FuzzySet):

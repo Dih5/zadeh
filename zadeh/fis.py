@@ -26,7 +26,8 @@ from .context import FuzzyContext, set_fuzzy_context
 class FIS:
     """A fuzzy inference system"""
 
-    def __init__(self, variables, rules, target, defuzzification="centroid"):
+    def __init__(self, variables, rules, target, defuzzification="centroid", aggregation="max", implication="min",
+                 AND="min", OR="max"):
         self.variables = variables
         if not isinstance(rules, FuzzyRuleSet):
             rules = FuzzyRuleSet(rules)
@@ -35,7 +36,10 @@ class FIS:
         # TODO: Support multitarget
         self.target = target
 
-        self.context = FuzzyContext(defuzzification=defuzzification)
+        self.context = FuzzyContext(defuzzification=defuzzification, aggregation=aggregation, implication=implication,
+                                    AND=AND, OR=OR)
+
+
 
     def save(self, path):
         """Save the FIS definition to a path"""
@@ -53,7 +57,11 @@ class FIS:
         return {"variables": [v._get_description() for v in self.variables],
                 "rules": self.rules._get_description(),
                 "target": self.target._get_description(),
-                "defuzzification": self.context.defuzzification
+                "defuzzification": self.context.defuzzification,
+                "aggregation": self.context.aggregation,
+                "implication": self.context.implication,
+                "AND": self.context.AND,
+                "OR": self.context.OR,
                 }
 
     @staticmethod
@@ -63,10 +71,15 @@ class FIS:
         variables_dict = {**{v.name: v for v in variables}, target_variable.name: target_variable}
 
         defuzzification = description.get("defuzzification", "centroid")
+        aggregation = description.get("aggregation", "max")
+        implication = description.get("implication", "min")
+        OR = description.get("OR", "max")
+        AND = description.get("AND", "min")
         return FIS(variables,
                    FuzzyRuleSet._from_description(description["rules"], variables_dict),
                    target_variable,
-                   defuzzification=defuzzification)
+                   defuzzification=defuzzification, aggregation=aggregation, implication=implication,
+                   AND=AND, OR=OR)
 
     def _to_c(self):
         with set_fuzzy_context(self.context):
@@ -111,7 +124,7 @@ class FIS:
 
         Returns:
             np.array: An array with the predictions.
-            
+
         """
         # Pandas dataframe syntax -- if available
         if pd is not None and isinstance(X, pd.DataFrame):

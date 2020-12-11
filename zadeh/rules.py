@@ -1,4 +1,14 @@
+from . import get_active_context
 from .sets import FuzzySet, FuzzySetOr
+
+try:
+    from math import prod  # Python >= 3.8
+except ImportError:
+    def prod(xx):
+        result = 1
+        for x in xx:
+            result *= x
+        return result
 
 
 class FuzzyProposition:
@@ -26,8 +36,6 @@ class FuzzyProposition:
 
     def __str__(self):
         return "[Undefined proposition]"
-
-    # TODO: More generalized fuzzy set operations could be defined
 
     def __or__(self, other):
         return FuzzyOr([self, other])
@@ -137,10 +145,27 @@ class FuzzyAnd(FuzzyProposition):
         return FuzzyAnd([variables_dict[variable] for variable in description["children"]])
 
     def __call__(self, values):
-        return min(p(values) for p in self.proposition_list)
+        method = get_active_context().AND
+        if method == "min":
+            return min(p(values) for p in self.proposition_list)
+        elif method == "product":
+            return prod(p(values) for p in self.proposition_list)
+        elif method == "lukasiewicz":
+            return max(0, sum(p(values) for p in self.proposition_list) - (len(self.proposition_list) - 1))
+        else:
+            raise ValueError("Invalid AND method in context: %s" % method)
 
     def _to_c(self):
-        return "min(%d, %s)" % (len(self.proposition_list), ", ".join([p._to_c() for p in self.proposition_list]))
+        method = get_active_context().AND
+        if method == "min":
+            return "min(%d, %s)" % (len(self.proposition_list), ", ".join(s._to_c() for s in self.proposition_list))
+        elif method == "product":
+            return " * ".join("%s" % s._to_c() for s in self.proposition_list)
+        elif method == "lukasiewicz":
+            return "max(2, 0, %s - %d)" % (
+                " + ".join(s._to_c() for s in self.proposition_list), len(self.proposition_list) - 1)
+        else:
+            raise ValueError("Invalid OR method in context: %s" % method)
 
     def __str__(self):
         return " and ".join("(%s)" % str(p) for p in self.proposition_list)
@@ -162,10 +187,26 @@ class FuzzyOr(FuzzyProposition):
             [FuzzyProposition._from_description(variable, variables_dict) for variable in description["children"]])
 
     def __call__(self, values):
-        return max(p(values) for p in self.proposition_list)
+        method = get_active_context().OR
+        if method == "max":
+            return max(p(values) for p in self.proposition_list)
+        elif method == "psum":
+            return 1 - prod(1 - p(values) for p in self.proposition_list)
+        elif method == "bsum":
+            return min(1, sum(p(values) for p in self.proposition_list))
+        else:
+            raise ValueError("Invalid OR method in context: %s" % method)
 
     def _to_c(self):
-        return "max(%d, %s)" % (len(self.proposition_list), ", ".join([p._to_c() for p in self.proposition_list]))
+        method = get_active_context().OR
+        if method == "max":
+            return "max(%d, %s)" % (len(self.proposition_list), ", ".join([p._to_c() for p in self.proposition_list]))
+        elif method == "psum":
+            return "1 - %s" % " * ".join("(1 - %s)" % p._to_c() for p in self.proposition_list)
+        elif method == "bsum":
+            return "min(2, 1, %s)" % " + ".join(p._to_c() for p in self.proposition_list)
+        else:
+            raise ValueError("Invalid OR method in context: %s" % method)
 
     def __str__(self):
         return " or ".join("(%s)" % str(p) for p in self.proposition_list)
@@ -200,16 +241,35 @@ class FuzzyRule:
                          weight=description["weight"])
 
     def _to_c(self):
+        method = get_active_context().implication
+        if method == "min":
+            output_code = "min(2, %s, %s)" % (self.antecedent._to_c(), self.consequent._to_c())
+        elif method == "prod":
+            output_code = "((%s) * (%s))" % (self.antecedent._to_c(), self.consequent._to_c())
+        else:
+            raise ValueError("Invalid implication method in context: %s" % method)
+
         if self.weight == 1.0:  # Simplify output
-            return "min(2, %s, %s)" % (self.antecedent._to_c(), self.consequent._to_c())
-        return "min(2, %s, %s) * %f" % (self.antecedent._to_c(), self.consequent._to_c(), self.weight)
+            return output_code
+        return "%s * %f" % (output_code, self.weight)
 
     def __call__(self, values):
         """Evaluate the rule, returning a fuzzy number"""
-        # TODO: Add more methods
+
         # Mamdani inference
-        cutoff = self.antecedent(values)
-        return FuzzySet(lambda x: min(cutoff, self.consequent.variable[self.consequent.value](x))) * self.weight
+        antecendent = self.antecedent(values)
+
+        method = get_active_context().implication
+        if method == "min":
+            output_set = FuzzySet(lambda x: min(antecendent, self.consequent.variable[self.consequent.value](x)))
+
+        elif method == "prod":
+            output_set = FuzzySet(lambda x: antecendent * self.consequent.variable[self.consequent.value](x))
+
+        else:
+            raise ValueError("Invalid implication method in context: %s" % method)
+
+        return output_set * self.weight
 
     def __repr__(self):
         return "FuzzyRule<%s>" % str(self)
@@ -233,14 +293,24 @@ class FuzzyRuleSet:
         return FuzzyRuleSet([FuzzyRule._from_description(d, variables_dict) for d in description["rule_list"]])
 
     def _to_c(self):
-        return "max(%d, %s)" % (len(self.rule_list), ", ".join(rule._to_c() for rule in self.rule_list))
+        method = get_active_context().aggregation
+        if method == "max":
+            return "max(%d, %s)" % (len(self.rule_list), ", ".join(rule._to_c() for rule in self.rule_list))
+        elif method == "psum":
+            return "1 - %s" % " * ".join("(1 - %s)" % rule._to_c() for rule in self.rule_list)
+        elif method == "bsum":
+            return "min(2, 1, %s)" % " + ".join("(%s)" % rule._to_c() for rule in self.rule_list)
+        else:
+            raise ValueError("Invalid aggregation method in context: %s" % method)
 
     def __call__(self, values):
         """Evaluate the set of rules, returning a fuzzy number"""
-        # TODO: Consider multiple output
-        # TODO: Add more methods
-        # Mamdani inference
-        return FuzzySetOr([rule(values) for rule in self.rule_list])
+        # Note the aggregation method might be different from the OR method
+        method = get_active_context().aggregation
+        if method not in ["max", "psum", "bsum"]:
+            # Check now to distinguish errors in OR or aggregation
+            raise ValueError("Invalid aggregation method in context: %s" % method)
+        return FuzzySetOr([rule(values) for rule in self.rule_list], method=method)
 
     def __getitem__(self, item):
         return self.rule_list[item]

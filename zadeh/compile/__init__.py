@@ -70,8 +70,8 @@ def compile_model(model, function_name="f"):
 class CompiledFIS(FIS):
     """A compiled version of a FIS"""
 
-    def __init__(self, variables, rules, target, defuzzification="centroid"):
-        super().__init__(variables, rules, target, defuzzification=defuzzification)
+    def __init__(self, *args, **kwargs, ):
+        super().__init__(*args, **kwargs)
 
         self.f, self.f_crisp = compile_model(self)
 
@@ -86,7 +86,12 @@ class CompiledFIS(FIS):
         Returns:
             CompiledFIS: A compiled version of the FIS
         """
-        return CompiledFIS(fis.variables, fis.rules, fis.target, defuzzification=fis.context.defuzzification)
+        return CompiledFIS(fis.variables, fis.rules, fis.target, defuzzification=fis.context.defuzzification,
+                           aggregation=fis.context.aggregation,
+                           implication=fis.context.implication,
+                           AND=fis.context.AND,
+                           OR=fis.context.OR,
+                           )
 
     def get_output(self, values):
         return FuzzySet(lambda x: self.f(x, *self.dict_to_ordered(values)))
