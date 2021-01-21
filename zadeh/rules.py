@@ -328,6 +328,26 @@ class FuzzyRuleSet:
     def __iter__(self):
         return iter(self.rule_list)
 
+    def __add__(self, other):
+        if isinstance(other, FuzzyRuleSet):
+            return FuzzyRuleSet(self.rule_list + other.rule_list)
+        elif isinstance(other, list):
+            return FuzzyRuleSet(self.rule_list + other)
+        elif isinstance(other, FuzzyRule):
+            return FuzzyRuleSet(self.rule_list + [other])
+        else:
+            raise ValueError("Unable to add rules")
+
+    def __radd__(self, other):
+        if isinstance(other, FuzzyRuleSet):
+            return FuzzyRuleSet(other.rule_list + self.rule_list)
+        elif isinstance(other, list):
+            return FuzzyRuleSet(other + self.rule_list)
+        elif isinstance(other, FuzzyRule):
+            return FuzzyRuleSet([other] + self.rule_list)
+        else:
+            raise ValueError("Unable to add rules")
+
 
 # Automatic rules
 def _ordered_values(v):
