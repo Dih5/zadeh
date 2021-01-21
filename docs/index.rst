@@ -6,6 +6,7 @@ zadeh
    :caption: Contents:
 
    demo.ipynb
+   automatic.ipynb
    advanced-fis-config.ipynb
    advanced-usage.ipynb
    modules.rst
