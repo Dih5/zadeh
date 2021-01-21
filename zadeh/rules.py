@@ -289,6 +289,10 @@ class FuzzyRuleSet:
         return {"rule_list": [r._get_description() for r in self.rule_list]}
 
     @staticmethod
+    def automatic(antecedent_var, consequent_var, weight=1.0, reverse=False):
+        return FuzzyRuleSet(_autorules(antecedent_var, consequent_var, weight=weight, reverse=reverse))
+
+    @staticmethod
     def _from_description(description, variables_dict):
         return FuzzyRuleSet([FuzzyRule._from_description(d, variables_dict) for d in description["rule_list"]])
 
@@ -323,3 +327,33 @@ class FuzzyRuleSet:
 
     def __iter__(self):
         return iter(self.rule_list)
+
+
+# Automatic rules
+def _ordered_values(v):
+    """Get the values sorted by increasing centroid"""
+    return [a[0] for a in
+            sorted([(name, v.domain.centroid(fuzzy_set)) for name, fuzzy_set in v.values.items()], key=lambda x: x[1])]
+
+
+def _autorules(antecedent_var, consequent_var, weight=1.0, reverse=False):
+    v1 = _ordered_values(antecedent_var)
+    v2 = _ordered_values(consequent_var)
+    n = len(v1)
+    m = len(v2)
+    if n == m:
+        pass
+    elif n == m + 1 and n % 2:
+        # Drop middle of v1
+        v1.pop(n // 2)
+        n -= 1
+    elif n + 1 == m and m % 2:
+        # Drop middle of v2
+        v2.pop(m // 2)
+        m -= 1
+    else:
+        raise ValueError("Unable to automatically choose a %d to %d mapping" % (n, m))
+    if reverse:
+        v2 = v2[::-1]
+
+    return [FuzzyRule(antecedent_var == a, consequent_var == c, weight=weight) for a, c in zip(v1, v2)]
