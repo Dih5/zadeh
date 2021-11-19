@@ -14,15 +14,6 @@ except ImportError:
         return result
 
 
-def _ensure_spaced(m, eps=1E-8):
-    """Ensure a list of numbers is ordered and with no repetitions, slightly shifting them if needed"""
-    m = np.asarray(m)
-    d = np.diff(m)
-    if np.any(d < 0):
-        raise ValueError("List of numbers is not ordered")
-    return np.cumsum(np.concatenate(([m[0]], np.where(d > 0, d, eps))))
-
-
 def _clip(x, min=0, max=1):
     """Clip to interval, defaults to [0, 1]"""
     return np.clip(x, min, max)
@@ -214,7 +205,6 @@ class TriangularFuzzySet(FuzzySet):
     """A fuzzy set defined by a triangular function"""
 
     def __init__(self, a, b, c):
-        a, b, c = _ensure_spaced([a, b, c])
         self.a = a
         self.b = b
         self.c = c
@@ -228,20 +218,27 @@ class TriangularFuzzySet(FuzzySet):
         return TriangularFuzzySet(description["a"], description["b"], description["c"])
 
     def __call__(self, x):
-        return max(min((x - self.a) / (self.b - self.a), (self.c - x) / (self.c - self.b)), 0)
+        if x < self.a or x > self.c:
+            return 0.0
+        if x < self.b:
+            if self.b == self.a:
+                return 1.0
+            return (x - self.a) / (self.b - self.a)
+        if self.c == self.b:
+            return 1.0
+        return (self.c - x) / (self.c - self.b)
 
     def _to_c(self, name):
-        return "max(2, min(2, ({x} - {a}) / ({b} - {a}), ({c} - {x}) / ({c} - {b})), 0.0)".format(x=name,
-                                                                                                  a=self.a,
-                                                                                                  b=self.b,
-                                                                                                  c=self.c)
+        return "triangular({a},{b},{c},{x})".format(x=name,
+                                                    a=self.a,
+                                                    b=self.b,
+                                                    c=self.c)
 
 
 class TrapezoidalFuzzySet(FuzzySet):
     """A fuzzy set defined by a trapezoidal function"""
 
     def __init__(self, a, b, c, d):
-        a, b, c, d = _ensure_spaced([a, b, c, d])
         self.a = a
         self.b = b
         self.c = c
@@ -256,14 +253,24 @@ class TrapezoidalFuzzySet(FuzzySet):
         return TrapezoidalFuzzySet(description["a"], description["b"], description["c"], description["d"])
 
     def __call__(self, x):
-        return max(min((x - self.a) / (self.b - self.a), 1, (self.d - x) / (self.d - self.c)), 0)
+        if x < self.a or x > self.d:
+            return 0.0
+        if x < self.b:
+            if self.b == self.a:
+                return 1.0
+            return (x - self.a) / (self.b - self.a)
+        if x > self.c:
+            if self.d == self.c:
+                return 1.0
+            return (self.d - x) / (self.d - self.c)
+        return 1.0
 
     def _to_c(self, name):
-        return "max(2, min(3, ({x} - {a}) / ({b} - {a}), 1.0, ({d} - {x}) / ({d} - {c})), 0.0)".format(x=name,
-                                                                                                       a=self.a,
-                                                                                                       b=self.b,
-                                                                                                       c=self.c,
-                                                                                                       d=self.d)
+        return "trapezoidal({a},{b},{c},{d},{x})".format(x=name,
+                                                         a=self.a,
+                                                         b=self.b,
+                                                         c=self.c,
+                                                         d=self.d)
 
 
 def _gauss(x, s, a):

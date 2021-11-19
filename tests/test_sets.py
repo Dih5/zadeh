@@ -31,18 +31,19 @@ def test_limit_cases():
     """Test limit cases on piecewise linear functions"""
     n = TriangularFuzzySet(0, 0, 1)
     assert n(-1) == 0
-    assert isclose(n(1E-8), 1)
+    assert n(0) == 1
     assert abs(n(1)) < 1E-6
 
     n = TriangularFuzzySet(1, 1, 2)
     assert n(-1) == 0
-    assert abs(n(1.000001) - 1) < 1E-6
+    assert n(1) == 1
     assert abs(n(2)) < 1E-6
 
     n = TrapezoidalFuzzySet(0, 0, 1, 1)
     assert n(-1) == 0
-    assert abs(n(0.000001) - 1) < 1E-6
+    assert n(0) == 1
     assert isclose(n(0.5), 1)
+    assert n(1) == 1
     assert n(2) == 0
 
 
