@@ -19,7 +19,7 @@ except ImportError:
     plt = None
 
 from .variables import FuzzyVariable
-from .rules import FuzzyRuleSet
+from .rules import FuzzyRuleSet, FuzzyOr, FuzzyAnd, FuzzyValuation
 from .context import FuzzyContext, set_fuzzy_context
 
 
@@ -38,8 +38,6 @@ class FIS:
 
         self.context = FuzzyContext(defuzzification=defuzzification, aggregation=aggregation, implication=implication,
                                     AND=AND, OR=OR)
-
-
 
     def save(self, path):
         """Save the FIS definition to a path"""
@@ -289,6 +287,100 @@ class FIS:
         ipywidgets.interact(plot,
                             **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
                                variable in free_variables})
+
+    def plot_rules(self, values, color="k"):
+        """
+        Produce a plot which can be used to explain the behaviour of the system for the given set of values
+
+        Args:
+            values (dict of str): A mapping from variables to their values.
+            color (str): Color used to plot rule activation
+
+        Returns:
+            2-tuple of (fig, axes) for further tweaking
+
+        """
+        if plt is None:
+            raise ModuleNotFoundError("matplotlib is required")
+
+        rule_list = self.rules.rule_list
+
+        variables = {x.name: i for i, x in enumerate(self.variables)}
+
+        fig, axes = plt.subplots(len(rule_list) + 1, len(self.variables) + 1, squeeze=False,
+                                 figsize=(14, 14), sharex='col', sharey=True)
+        for i, rule in enumerate(rule_list):
+            # Rule input
+            if isinstance(rule.antecedent, (FuzzyOr, FuzzyAnd)):
+                proposition_list = rule.antecedent.proposition_list
+            elif isinstance(rule.antecedent, FuzzyValuation):
+                proposition_list = [rule.antecedent]
+            else:
+                raise NotImplementedError
+
+            for proposition in proposition_list:
+                plt.sca(axes[i, variables[proposition.variable.name]])
+                proposition.variable.plot(value=proposition.value)
+                v = values[proposition.variable.name]
+                fv = proposition(values)
+                plt.axhline(fv, color=color, ls="--")
+                plt.plot([v], [fv], "o", color=color)
+
+            for var, j in variables.items():
+                plt.sca(axes[i, j])
+                plt.axvline(values[var], color=color)
+
+            # Rule output
+            plt.sca(axes[i, -1])
+            rule.consequent.variable.plot(value=rule.consequent.value)
+            xx = rule.consequent.variable.domain.get_mesh()
+            plt.plot(xx, [rule(values)(x) for x in xx], color=color)
+
+        # Inputs
+        for j, variable in enumerate(self.variables):
+            plt.sca(axes[-1, j])
+            axes[-1, j].axvline(values[variable.name], 0, 1, color=color)
+            plt.xlim(variable.domain.min, variable.domain.max)
+            plt.xlabel(variable.name)
+
+        # Output
+
+        plt.sca(axes[-1, -1])
+        xx = self.target.domain.get_mesh()
+        plt.plot(xx, [self.get_output(values)(x) for x in xx], label="membership")
+        plt.vlines(self.get_crisp_output(values), 0, 1, color="C1", ls="--", label="crisp")
+        plt.legend()
+
+        # Final tuning
+        for i in range(len(rule_list) + 1):
+            for j, var in enumerate(self.variables + [self.target]):
+                plt.sca(axes[i, j])
+                plt.ylabel("Membership function" if j == 0 else "")
+                plt.xlabel(var.name if i > len(self.variables) else "")
+
+        fig.subplots_adjust(hspace=0)
+        fig.subplots_adjust(wspace=0.05)
+
+        return fig, axes
+
+    def plot_rules_interactive(self, continuous_update=False):
+        """
+        Create an interactive explorer for the plot_rules method
+
+        Args:
+            continuous_update (bool): Whether to continuously update with the widgets value.
+
+        """
+        if ipywidgets is None or plt is None:
+            raise ModuleNotFoundError("ipywidgets and matplotlib are required")
+
+        def plot(**kwargs):
+            self.plot_rules(kwargs)
+            plt.show()
+
+        ipywidgets.interact(plot,
+                            **{variable.name: variable.domain.get_ipywidget(continuous_update=continuous_update) for
+                               variable in self.variables})
 
     def compile(self):
         """Get a compiled version of the model"""
