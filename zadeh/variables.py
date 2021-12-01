@@ -85,10 +85,22 @@ class FuzzyVariable:
         values = {key: FuzzySet._from_description(val) for key, val in description["values"].items()}
         return FuzzyVariable(domain, values, name=description["name"])
 
-    def plot(self):
-        """Plot the membership function for each of the values"""
-        for value, set in self.values.items():
-            self.domain.plot_set(set, label=value)
+    def plot(self, value=None):
+        """
+        Plot the membership function for each of the values
+
+        Args:
+            value (str): A value to highlight. If so, the other values are shown dimmed and not in the legend
+
+        """
+        for val, set in self.values.items():
+            if value is not None:
+                if val == value:
+                    self.domain.plot_set(set, label=val)
+                else:
+                    self.domain.plot_set(set, alpha=0.3)
+            else:  # Plot all values
+                self.domain.plot_set(set, label=val)
 
         plt.legend()
 
