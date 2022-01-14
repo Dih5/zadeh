@@ -4,7 +4,6 @@
 
 [![license MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Dih5/zadeh/master/LICENSE.txt)
 
-[![Build Status](https://travis-ci.org/Dih5/zadeh.svg?branch=master)](https://travis-ci.org/Dih5/zadeh)
 [![Documentation Status](https://readthedocs.org/projects/zadeh/badge/?version=latest)](http://zadeh.readthedocs.io/en/latest/?badge=latest)
 
 Python package to build fuzzy inference systems
